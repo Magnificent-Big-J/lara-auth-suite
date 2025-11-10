@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Rainwaves\LaraAuthSuite\Http\Controllers\AuthController;
+use Rainwaves\LaraAuthSuite\Http\Controllers\PasswordResetController;
 
 Route::group([
     'prefix' => config('authx.route_prefix', 'auth'),
@@ -19,7 +21,11 @@ Route::group([
     'prefix' => config('authx.route_prefix', 'auth'),
     'middleware' => ['api'],
 ], function () {
+    Route::post('password/forgot', [PasswordResetController::class, 'request']);
+    Route::post('password/reset',  [PasswordResetController::class, 'reset']);
+
     Route::post('login', [AuthController::class, 'login']);
     Route::get('me', [AuthController::class, 'me'])->middleware('auth:sanctum');
     Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 });
+
