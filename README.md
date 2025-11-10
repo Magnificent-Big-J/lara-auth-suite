@@ -1,5 +1,11 @@
 # 🌊 Rainwaves Lara Auth Suite
 
+[![Packagist Version](https://img.shields.io/packagist/v/rainwaves/lara-auth-suite.svg?style=flat-square)](https://packagist.org/packages/rainwaves/lara-auth-suite)
+[![PHP Version](https://img.shields.io/badge/PHP-%5E8.2-blue?style=flat-square&logo=php)](https://www.php.net/)
+[![Laravel](https://img.shields.io/badge/Laravel-10%2F11-red?style=flat-square&logo=laravel)](https://laravel.com)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/rainwaves/lara-auth-suite/tests.yml?label=tests&style=flat-square)](https://github.com/rainwaves/lara-auth-suite/actions)
+[![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
+
 > **Full-featured Laravel API authentication suite** supporting **Sanctum tokens**, **session mode**, **password resets**, and **2FA (email, SMS, or app authenticator)** — built for modern API and SPA architectures.
 
 ---
@@ -7,12 +13,12 @@
 ## 🚀 Overview
 
 **Rainwaves/Lara Auth Suite** gives you plug-and-play authentication for Laravel APIs.  
-It unifies Sanctum’s token authentication and Laravel’s session guard, allowing developers to choose their preferred mode — or run both at once.
+It unifies Sanctum’s token authentication and Laravel’s session guard, allowing developers to choose their preferred mode — or even run both at once.
 
-It’s ideal for:
+**Perfect for:**
 - SPAs and mobile apps using token-based auth
 - Inertia or Blade apps using session-based auth
-- Hybrid systems that want both
+- Hybrid systems that need both
 
 ---
 
@@ -20,8 +26,8 @@ It’s ideal for:
 
 | Feature | Status | Description |
 |----------|---------|-------------|
-| **Token-based auth (Sanctum)** | ✅ Planned | Secure API tokens with abilities and expiry. |
-| **Session-based auth** | ✅ Planned | Classic Laravel session guard for same-domain SPAs. |
+| **Token-based auth (Sanctum)** | ✅ Done | Secure API tokens with abilities and expiry. |
+| **Session-based auth** | ✅ Done | Classic Laravel session guard for same-domain SPAs. |
 | **Password reset flow** | 🟡 In progress | Secure email-based reset, throttled and auditable. |
 | **2FA (Email, SMS, TOTP)** | 🟡 Planned | Add a second factor via email, SMS, or authenticator app. |
 | **Recovery codes & trusted devices** | 🟡 Planned | Allow fallback recovery and device remembering. |
@@ -33,26 +39,32 @@ It’s ideal for:
 ## 🧱 Folder Structure
 
 src/
-Config/ authx.php # Configuration
-Routes/ api.php # Routes (token/session/features)
-Http/
-Controllers/ # Thin controllers
-Middleware/ # Mode/ability enforcement
-Requests/ # Validation only
-Resources/ # API resource transformers
-Actions/ # Core use-cases (LoginUser, IssueToken, etc.)
-Domain/
-Models/ Policies/ Events/ Listeners/ Notifications/
-TwoFactor/
-Contracts/ Drivers/ # 2FA providers (EmailOtp, SmsOtp, Totp)
-Token/
-Contracts/ Sanctum/ # Token logic & integration
-Session/
-Csrf/ # SPA session helpers
-Support/
-DTOs/ Enums/ Helpers/
-Exceptions/ Console/ Database/ OpenApi/
+├─ Config/ authx.php # Configuration
+├─ Routes/ api.php # Routes (token/session/features)
+├─ Http/
+│ ├─ Controllers/ # Thin controllers
+│ ├─ Middleware/ # Mode/ability enforcement
+│ ├─ Requests/ # Validation only
+│ └─ Resources/ # API resource transformers
+├─ Actions/ # Core use-cases (LoginUser, IssueToken, etc.)
+├─ Domain/
+│ ├─ Models/ Policies/ Events/ Listeners/ Notifications/
+├─ TwoFactor/
+│ ├─ Contracts/ Drivers/ # 2FA providers (EmailOtp, SmsOtp, Totp)
+├─ Token/
+│ ├─ Contracts/ Sanctum/ # Token logic & integration
+├─ Session/
+│ └─ Csrf/ # SPA session helpers
+├─ Support/
+│ ├─ DTOs/ Enums/ Helpers/
+├─ Exceptions/
+├─ Console/
+├─ Database/
+└─ OpenApi/
 tests/
+
+yaml
+Copy code
 
 ---
 
@@ -61,32 +73,34 @@ tests/
 ```bash
 composer require rainwaves/lara-auth-suite
 php artisan vendor:publish --provider="Rainwaves\\LaraAuthSuite\\LaraAuthSuiteServiceProvider" --tag=authx-config
+This publishes the config/authx.php file.
 
-This will create config/authx.php.
 🧪 Local Development Setup
-To develop or test locally:
-
-
 Clone the repo
+
+bash
+Copy code
 git clone https://github.com/rainwaves/lara-auth-suite.git
 cd lara-auth-suite
-
-
-
 Install dependencies
+
+bash
+Copy code
 composer install
-
-
-
 Run tests
+
+bash
+Copy code
 php vendor/bin/pest
+(Optional) Create a playground Laravel app to test
 
-
-
-(Optional) Create a playground Laravel app to test:
+bash
+Copy code
 composer create-project laravel/laravel authsuite-playground
+Then in your app’s composer.json:
 
-Then in the app’s composer.json:
+json
+Copy code
 {
   "repositories": [
     {
@@ -99,84 +113,77 @@ Then in the app’s composer.json:
     "rainwaves/lara-auth-suite": "*"
   }
 }
-
 Finally:
+
+bash
+Copy code
 composer update rainwaves/lara-auth-suite
 php artisan vendor:publish --provider="Rainwaves\\LaraAuthSuite\\LaraAuthSuiteServiceProvider" --tag=authx-config
 php artisan serve
+Test endpoint:
 
-Test via http://localhost:8000/auth/ping.
-
-
+http://localhost:8000/auth/ping
 
 🧩 Requirements
-
-
 PHP 8.2 or higher
-
 
 Laravel 10.x or 11.x
 
-
 MySQL / PostgreSQL / SQLite
-
 
 Laravel Sanctum
 
-
-Optional:
-
+Optional integrations:
 
 Twilio / Vonage SDKs (for SMS 2FA)
 
-
 spomky-labs/otphp (for TOTP)
-
 
 bacon/bacon-qr-code (for QR provisioning)
 
-
-
 🗺️ Roadmap
-PhaseMilestoneDescription0BootstrapService provider, config, routes, tests (✅ Done)1Token Auth (Sanctum)Login, logout, me2Session ModeCSRF helper for SPAs3Password ResetRequest + reset flows42FA Email OTPBasic 2FA verification52FA TOTPAuthenticator app support62FA SMSTwilio / Vonage driver7Token & Device MgmtRevoke/list/remember devices8Docs & SwaggerOpenAPI annotations9Harden & ReleaseCI, coverage, v1.0.0
+Phase	Milestone	Description
+0	Bootstrap	Service provider, config, routes, tests ✅
+1	Token Auth (Sanctum)	Login, logout, me
+2	Session Mode	CSRF helper for SPAs
+3	Password Reset	Request + reset flows
+4	2FA Email OTP	Basic 2FA verification
+5	2FA TOTP	Authenticator app support
+6	2FA SMS	Twilio / Vonage driver
+7	Token & Device Mgmt	Revoke/list/remember devices
+8	Docs & Swagger	OpenAPI annotations
+9	Harden & Release	CI, coverage, v1.0.0
 
 🧰 Development Stack
-
-
 Framework: Laravel
-
 
 Testing: Pest + Orchestra Testbench
 
-
-Auth: Sanctum
-
+Auth: Laravel Sanctum
 
 Docs: Swagger (zircote/swagger-php)
 
-
 CI: GitHub Actions
 
-
-
 🤝 Contributing
-
-
 Fork the repo
 
+Create your feature branch
 
-Create your feature branch (git checkout -b feat/awesome)
+bash
+Copy code
+git checkout -b feat/awesome
+Commit your changes
 
+bash
+Copy code
+git commit -m 'feat: add something awesome'
+Push your branch
 
-Commit your changes (git commit -m 'feat: add something awesome')
-
-
-Push (git push origin feat/awesome)
-
-
-Create a pull request
-
-
+bash
+Copy code
+git push origin feat/awesome
+Open a pull request 🚀
 
 🛡️ Security
 If you discover a security vulnerability, please email security@rainwaves.dev.
@@ -190,9 +197,10 @@ Created with pride by Rainwaves
 
 Building secure, scalable Laravel foundations for modern SaaS platforms.
 
+yaml
+Copy code
 
 ---
 
-Would you like me to also include **badges** (Packagist version, build status, coverage, etc.) so it’s ready for GitHub?
-
-
+Would you like me to add **Swagger integration docs** (section showing how devs can enable `/docs` route and auto-generate OpenAPI YAML from annotations)?  
+That would make this README production-ready for Packagist and GitHub.
