@@ -11,8 +11,10 @@ use Rainwaves\LaraAuthSuite\Contracts\SessionAuthService;
 use Rainwaves\LaraAuthSuite\Services\Auth\AuthServiceImpl;
 use Rainwaves\LaraAuthSuite\Services\Auth\PasswordResetServiceImpl;
 use Rainwaves\LaraAuthSuite\Services\Auth\SessionAuthServiceImpl;
+use Rainwaves\LaraAuthSuite\Services\TwoFactor\TwoFactorAuthService;
 use Rainwaves\LaraAuthSuite\Token\Contracts\TokenManager;
 use Rainwaves\LaraAuthSuite\Token\Sanctum\SanctumTokenManager;
+use Rainwaves\LaraAuthSuite\TwoFactor\Contracts\ITwoFactorAuth;
 
 class LaraAuthSuiteServiceProvider extends ServiceProvider
 {
@@ -46,7 +48,10 @@ class LaraAuthSuiteServiceProvider extends ServiceProvider
             )
         );
 
-
+        $this->app->singleton(
+            ITwoFactorAuth::class,
+            TwoFactorAuthService::class
+        );
     }
 
     public function boot(): void
@@ -54,6 +59,8 @@ class LaraAuthSuiteServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/Config/authx.php' => config_path('authx.php'),
         ], 'authx-config');
+
+        $this->loadMigrationsFrom(__DIR__.'/Database/migrations');
 
         $this->loadRoutesFrom(__DIR__.'/Routes/api.php');
     }

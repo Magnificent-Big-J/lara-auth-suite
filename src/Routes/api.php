@@ -5,6 +5,7 @@ use Laravel\Sanctum\Http\Controllers\CsrfCookieController;
 use Rainwaves\LaraAuthSuite\Http\Controllers\AuthController;
 use Rainwaves\LaraAuthSuite\Http\Controllers\PasswordResetController;
 use Rainwaves\LaraAuthSuite\Http\Controllers\SessionAuthController;
+use Rainwaves\LaraAuthSuite\Http\Controllers\TwoFactorManageController;
 
 // ─────────────────────────────────────────────
 // /auth/* — API stack (stateless): token auth + password reset
@@ -48,4 +49,34 @@ Route::prefix(config('authx.route_prefix', 'auth').'/session')
         Route::post('login',  [SessionAuthController::class, 'login']);
         Route::get('me',      [SessionAuthController::class, 'me'])->middleware('auth:web');
         Route::post('logout', [SessionAuthController::class, 'logout'])->middleware('auth:web');
+    });
+
+// Token (api) stack
+Route::prefix(config('authx.route_prefix', 'auth'))
+    ->middleware(['api'])
+    ->group(function () {
+        Route::middleware('auth:sanctum')->group(function () {
+            Route::get('2fa/status',        [TwoFactorManageController::class, 'status']);
+            Route::post('2fa/email',        [TwoFactorManageController::class, 'emailChallenge']);
+            Route::post('2fa/sms',          [TwoFactorManageController::class, 'smsChallenge']);
+            Route::post('2fa/verify-otp',   [TwoFactorManageController::class, 'verifyOtp']);
+            Route::post('2fa/totp/enable',  [TwoFactorManageController::class, 'enableTotp']);
+            Route::post('2fa/totp/verify',  [TwoFactorManageController::class, 'verifyTotp']);
+            Route::post('2fa/disable',      [TwoFactorManageController::class, 'disable']);
+        });
+    });
+
+// Session (web) stack
+Route::prefix(config('authx.route_prefix', 'auth').'/session')
+    ->middleware(['web'])
+    ->group(function () {
+        Route::middleware('auth:web')->group(function () {
+            Route::get('2fa/status',        [TwoFactorManageController::class, 'status']);
+            Route::post('2fa/email',        [TwoFactorManageController::class, 'emailChallenge']);
+            Route::post('2fa/sms',          [TwoFactorManageController::class, 'smsChallenge']);
+            Route::post('2fa/verify-otp',   [TwoFactorManageController::class, 'verifyOtp']);
+            Route::post('2fa/totp/enable',  [TwoFactorManageController::class, 'enableTotp']);
+            Route::post('2fa/totp/verify',  [TwoFactorManageController::class, 'verifyTotp']);
+            Route::post('2fa/disable',      [TwoFactorManageController::class, 'disable']);
+        });
     });
