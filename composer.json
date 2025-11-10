@@ -1,0 +1,30 @@
+{
+    "name": "rainwaves/lara-auth-suite",
+    "description": "Laravel API auth suite: Sanctum tokens & session modes, password reset, and 2FA.",
+    "type": "library",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Rainwaves\\LaraAuthSuite\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Rainwaves\\LaraAuthSuite\\LaraAuthSuiteServiceProvider"
+            ]
+        }
+    },
+    "require": {
+        "php": "^8.2",
+        "laravel/framework": "^10.0|^11.0"
+    },
+    "require-dev": {
+        "laravel/sanctum": "^4.0",
+        "orchestra/testbench": "^9.0",
+        "pestphp/pest": "^3.0",
+        "pestphp/pest-plugin-laravel": "^3.0"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
