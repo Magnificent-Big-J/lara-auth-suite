@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
+        bootstrap="vendor/autoload.php"
+        colors="true"
+        executionOrder="random"
+        beStrictAboutChangesToGlobalState="true"
+        beStrictAboutOutputDuringTests="true"
+        failOnRisky="true"
+        failOnWarning="true"
+        failOnEmptyTestSuite="true"
+        displayDetailsOnIncompleteTests="true"
+        displayDetailsOnSkippedTests="true"
+>
+    <cacheDirectory>.phpunit.cache</cacheDirectory>
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory>tests/Feature</directory>
+        </testsuite>
+    </testsuites>
+    <coverage>
+        <include>
+            <directory suffix=".php">src</directory>
+        </include>
+        <exclude>
+            <directory>vendor</directory>
+            <directory>tests</directory>
+            <directory>src/OpenApi</directory>
+            <directory>src/Database</directory>
+            <directory>src/Support/Helpers/Stubs</directory>
+        </exclude>
+
+        <report>
+            <clover outputFile="build/coverage/coverage.xml"/>
+            <html outputDirectory="build/coverage/html" lowUpperBound="50" highLowerBound="85"/>
+            <text outputFile="php://stdout" showOnlySummary="false"/>
+        </report>
+    </coverage>
+    <logging>
+        <junit outputFile="build/junit/report.xml"/>
+    </logging>
+    <php>
+        <ini name="error_reporting" value="-1"/>
+        <ini name="memory_limit" value="-1"/>
+        <env name="APP_ENV" value="testing"/>
+        <env name="APP_DEBUG" value="true"/>
+        <env name="APP_KEY" value="base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="/>
+        <env name="DB_CONNECTION" value="sqlite"/>
+        <env name="DB_DATABASE" value=":memory:"/>
+        <env name="CACHE_DRIVER" value="array"/>
+        <env name="QUEUE_CONNECTION" value="sync"/>
+        <env name="SESSION_DRIVER" value="array"/>
+        <env name="MAIL_MAILER" value="array"/>
+        <env name="SESSION_DOMAIN" value="localhost"/>
+        <env name="SANCTUM_STATEFUL_DOMAINS" value="localhost,localhost:3000,localhost:5173"/>
+        <env name="APP_URL" value="http://localhost"/>
+        <env name="APP_TIMEZONE" value="UTC"/>
+    </php>
+</phpunit>
