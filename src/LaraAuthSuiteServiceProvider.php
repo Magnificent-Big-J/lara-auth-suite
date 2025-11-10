@@ -7,8 +7,10 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;
 use Rainwaves\LaraAuthSuite\Contracts\AuthService;
 use Rainwaves\LaraAuthSuite\Contracts\PasswordResetService;
+use Rainwaves\LaraAuthSuite\Contracts\SessionAuthService;
 use Rainwaves\LaraAuthSuite\Services\Auth\AuthServiceImpl;
 use Rainwaves\LaraAuthSuite\Services\Auth\PasswordResetServiceImpl;
+use Rainwaves\LaraAuthSuite\Services\Auth\SessionAuthServiceImpl;
 use Rainwaves\LaraAuthSuite\Token\Contracts\TokenManager;
 use Rainwaves\LaraAuthSuite\Token\Sanctum\SanctumTokenManager;
 
@@ -36,6 +38,14 @@ class LaraAuthSuiteServiceProvider extends ServiceProvider
             PasswordResetService::class,
             PasswordResetServiceImpl::class
         );
+
+        $this->app->bind(
+            SessionAuthService::class,
+            fn($app) => new SessionAuthServiceImpl(
+                $app['config']->get('authx.user_model', User::class)
+            )
+        );
+
 
     }
 
