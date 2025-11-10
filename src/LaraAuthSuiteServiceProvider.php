@@ -2,8 +2,17 @@
 
 namespace Rainwaves\LaraAuthSuite;
 
+use App\Models\User;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;
+use Rainwaves\LaraAuthSuite\Contracts\AuthService;
+use Rainwaves\LaraAuthSuite\Contracts\PasswordResetService;
+use Rainwaves\LaraAuthSuite\Contracts\SessionAuthService;
+use Rainwaves\LaraAuthSuite\Services\Auth\AuthServiceImpl;
+use Rainwaves\LaraAuthSuite\Services\Auth\PasswordResetServiceImpl;
+use Rainwaves\LaraAuthSuite\Services\Auth\SessionAuthServiceImpl;
+use Rainwaves\LaraAuthSuite\Token\Contracts\TokenManager;
+use Rainwaves\LaraAuthSuite\Token\Sanctum\SanctumTokenManager;
 
 class LaraAuthSuiteServiceProvider extends ServiceProvider
 {
@@ -13,18 +22,31 @@ class LaraAuthSuiteServiceProvider extends ServiceProvider
 
         // Token manager DI
         $this->app->bind(
-            \Rainwaves\LaraAuthSuite\Token\Contracts\TokenManager::class,
-            \Rainwaves\LaraAuthSuite\Token\Sanctum\SanctumTokenManager::class
+            TokenManager::class,
+            SanctumTokenManager::class
         );
 
         // Auth service DI (pull user model from config)
         $this->app->bind(
-            \Rainwaves\LaraAuthSuite\Contracts\AuthService::class,
+            AuthService::class,
             function ($app) {
-                $userModel = $app['config']->get('authx.user_model', \App\Models\User::class);
-                return new \Rainwaves\LaraAuthSuite\Services\Auth\AuthServiceImpl($userModel);
+                $userModel = $app['config']->get('authx.user_model', User::class);
+                return new AuthServiceImpl($userModel);
             }
         );
+        $this->app->bind(
+            PasswordResetService::class,
+            PasswordResetServiceImpl::class
+        );
+
+        $this->app->bind(
+            SessionAuthService::class,
+            fn($app) => new SessionAuthServiceImpl(
+                $app['config']->get('authx.user_model', User::class)
+            )
+        );
+
+
     }
 
     public function boot(): void
