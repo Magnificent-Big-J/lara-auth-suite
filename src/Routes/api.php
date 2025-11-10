@@ -14,3 +14,12 @@ Route::group([
         ]);
     });
 });
+
+Route::group([
+    'prefix' => config('authx.route_prefix', 'auth'),
+    'middleware' => ['api'],
+], function () {
+    Route::post('login', [AuthController::class, 'login']);
+    Route::get('me', [AuthController::class, 'me'])->middleware('auth:sanctum');
+    Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+});

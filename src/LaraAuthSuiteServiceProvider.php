@@ -22,8 +22,5 @@ class LaraAuthSuiteServiceProvider extends ServiceProvider
 
         // Routes (API)
         $this->loadRoutesFrom(__DIR__.'/Routes/api.php');
-
-        // (Optional) middleware aliases can be registered here later
-        // app('router')->aliasMiddleware('authsuite', \Rainwaves\LaraAuthSuite\Http\Middleware\AuthSuite::class);
     }
 }
