@@ -2,57 +2,55 @@
 
 namespace Rainwaves\LaraAuthSuite\Http\Controllers;
 
+namespace Rainwaves\LaraAuthSuite\Http\Controllers;
+
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
-use App\Models\User; // playground app provides this
+use Rainwaves\LaraAuthSuite\Contracts\AuthService;
+use Rainwaves\LaraAuthSuite\Http\Requests\LoginRequest;
 use Rainwaves\LaraAuthSuite\Http\Resources\UserResource;
+use Rainwaves\LaraAuthSuite\Token\Contracts\TokenManager;
 
-class AuthController
+readonly class AuthController
 {
-    public function login(Request $request)
+    public function __construct(
+        private AuthService  $auth,
+        private TokenManager $tokens
+    ) {}
+
+    /**
+     * @throws ValidationException
+     */
+    public function login(LoginRequest $request): JsonResponse
     {
-        $credentials = $request->validate([
-            'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string'],
-        ]);
+        $user = $this->auth->attemptLogin(
+            $request->string('email')->toString(),
+            $request->string('password')->toString(),
+        );
 
-        /** @var \App\Models\User $user */
-        $user = User::where('email', $credentials['email'])->first();
-
-        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
-            ]);
-        }
-
-        // Revoke old tokens if needed (optional)
-        $user->tokens()->delete();
-
-        // Create token with configured abilities
-        $token = $user->createToken(
-            'api-token',
-            config('authx.tokens.default_abilities', ['*'])
-        )->plainTextToken;
+        $token = $this->tokens->issue(
+            $user,
+            config('authx.tokens.default_abilities', ['*']),
+            config('authx.tokens.expiry_minutes')
+        );
 
         return response()->json([
-            'status' => 'ok',
-            'token' => $token,
+            'status'     => 'ok',
+            'token'      => $token,
             'token_type' => 'Bearer',
-            'user' => new UserResource($user),
+            'user'       => new UserResource($user),
         ]);
     }
 
-    public function me(Request $request)
+    public function me(Request $request): UserResource
     {
         return new UserResource($request->user());
     }
 
-    public function logout(Request $request)
+    public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
-
+        $this->tokens->revokeCurrent($request->user());
         return response()->json(['status' => 'ok', 'message' => 'Logged out']);
     }
 }
