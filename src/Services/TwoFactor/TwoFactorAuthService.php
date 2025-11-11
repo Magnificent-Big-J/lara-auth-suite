@@ -85,46 +85,9 @@ class TwoFactorAuthService implements ITwoFactorAuth
 
         return $code;
     }
-
-    public function verifyOtp(Authenticatable $user, string $code): bool
-    {
-        $challenge = TwoFactorChallenge::where('user_id', $user->getAuthIdentifier())
-            ->whereNull('consumed_at')
-            ->where('expires_at', '>', now())
-            ->latest('id')
-            ->first();
-
-        if (! $challenge) {
-            return false;
-        }
-
-        if (! $challenge->canAttempt()) {
-            return false;
-        }
-
-        $challenge->incrementAttempts();
-
-        if (! $challenge->verifyCode($code)) {
-            return false;
-        }
-
-        $challenge->markConsumed();
-
-        // Mark enabled for email OTP if not stored yet (opt-in)
-        if ($challenge->channel === 'email') {
-            TwoFactorSecret::updateOrCreate(
-                ['user_id' => $user->getAuthIdentifier(), 'type' => 'email'],
-                ['enabled_at' => now(), 'secret' => null]
-            );
-        }
-
-        return true;
-    }
-
     public function enableAuthenticatorApp(Authenticatable $user): string
     {
-        // For a real TOTP setup, prefer spomky-labs/otphp to generate BASE32 secrets.
-        // For now, generate a 20-byte random and return Base32 without padding for compatibility.
+
         $raw = random_bytes(20);
         $base32 = rtrim($this->base32Encode($raw), '=');
 
@@ -170,6 +133,66 @@ class TwoFactorAuthService implements ITwoFactorAuth
             ['user_id' => $user->getAuthIdentifier(), 'type' => 'email'],
             ['enabled_at' => now(), 'revoked_at' => null]
         );
+    }
+
+    /** Mark this session/token as 2FA-verified for a short TTL (step-up). */
+    public function markVerified(Authenticatable $user): void
+    {
+        $ttl = (int) config('authx.2fa.verification_ttl_seconds', 600);
+        Cache::put($this->verificationCacheKey($user), true, $ttl);
+    }
+
+    /** Check if current session/token is within verified window. */
+    public function isVerified(Authenticatable $user): bool
+    {
+        return (bool) Cache::get($this->verificationCacheKey($user), false);
+    }
+
+    /** Where to store the “step-up verified” flag (token-aware or session-aware). */
+    protected function verificationCacheKey(Authenticatable $user): string
+    {
+        // If using Sanctum PATs (token mode), bind to token id; otherwise bind to session id (session mode)
+        $tokenId = method_exists($user, 'currentAccessToken') && $user->currentAccessToken()
+            ? $user->currentAccessToken()->id
+            : null;
+
+        return $tokenId
+            ? "authx:2fa:token:{$tokenId}"
+            : "authx:2fa:session:" . (session()->getId() ?? 'anon');
+    }
+
+    // 🔁 call markVerified() when OTP verification succeeds
+    public function verifyOtp(Authenticatable $user, string $code): bool
+    {
+        $challenge = TwoFactorChallenge::where('user_id', $user->getAuthIdentifier())
+            ->whereNull('consumed_at')
+            ->where('expires_at', '>', now())
+            ->latest('id')
+            ->first();
+
+        if (! $challenge || ! $challenge->canAttempt()) {
+            return false;
+        }
+
+        $challenge->incrementAttempts();
+
+        if (! $challenge->verifyCode($code)) {
+            return false;
+        }
+
+        $challenge->markConsumed();
+
+        if ($challenge->channel === 'email') {
+            TwoFactorSecret::updateOrCreate(
+                ['user_id' => $user->getAuthIdentifier(), 'type' => 'email'],
+                ['enabled_at' => now(), 'secret' => null]
+            );
+        }
+
+        // ✅ mark this token/session as step-up verified
+        $this->markVerified($user);
+
+        return true;
     }
 
     /** Lightweight Base32 encoder (RFC 4648). */

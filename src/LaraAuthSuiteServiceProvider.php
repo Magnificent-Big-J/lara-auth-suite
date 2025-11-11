@@ -8,10 +8,13 @@ use Illuminate\Support\Facades\Route;
 use Rainwaves\LaraAuthSuite\Contracts\AuthService;
 use Rainwaves\LaraAuthSuite\Contracts\PasswordResetService;
 use Rainwaves\LaraAuthSuite\Contracts\PermissionSyncService;
+use Rainwaves\LaraAuthSuite\Contracts\RegistrationService;
 use Rainwaves\LaraAuthSuite\Contracts\SessionAuthService;
+use Rainwaves\LaraAuthSuite\Http\Middleware\EnsureTwoFactorVerified;
 use Rainwaves\LaraAuthSuite\Services\Auth\AuthServiceImpl;
 use Rainwaves\LaraAuthSuite\Services\Auth\PasswordResetServiceImpl;
 use Rainwaves\LaraAuthSuite\Services\Auth\PermissionSync\SpatiePermissionSyncService;
+use Rainwaves\LaraAuthSuite\Services\Auth\RegistrationServiceImpl;
 use Rainwaves\LaraAuthSuite\Services\Auth\SessionAuthServiceImpl;
 use Rainwaves\LaraAuthSuite\Services\TwoFactor\TwoFactorAuthService;
 use Rainwaves\LaraAuthSuite\Token\Contracts\TokenManager;
@@ -63,8 +66,8 @@ class LaraAuthSuiteServiceProvider extends ServiceProvider
         );
 
         $this->app->singleton(
-            \Rainwaves\LaraAuthSuite\Contracts\RegistrationService::class,
-            fn($app) => new \Rainwaves\LaraAuthSuite\Services\Auth\RegistrationServiceImpl(
+            RegistrationService::class,
+            fn($app) => new RegistrationServiceImpl(
                 $app->make(PermissionSyncService::class),
                 $app['config']->get('authx.user_model', User::class)
             )
@@ -81,6 +84,8 @@ class LaraAuthSuiteServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__.'/Database/migrations');
 
         $this->loadRoutesFrom(__DIR__.'/Routes/api.php');
+        $this->app['router']->aliasMiddleware('2fa.enforced', EnsureTwoFactorVerified::class);
+
     }
 
 }
