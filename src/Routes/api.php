@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Http\Controllers\CsrfCookieController;
 use Rainwaves\LaraAuthSuite\Http\Controllers\AuthController;
 use Rainwaves\LaraAuthSuite\Http\Controllers\PasswordResetController;
+use Rainwaves\LaraAuthSuite\Http\Controllers\RegistrationController;
 use Rainwaves\LaraAuthSuite\Http\Controllers\SessionAuthController;
 use Rainwaves\LaraAuthSuite\Http\Controllers\TwoFactorManageController;
 
@@ -26,6 +27,7 @@ Route::prefix(config('authx.route_prefix', 'auth'))
 
         // Token-based auth (Sanctum PAT)
         Route::post('login',  [AuthController::class, 'login']);
+        Route::post('register', [RegistrationController::class, 'register']);
         Route::get('me',      [AuthController::class, 'me'])->middleware('auth:sanctum');
         Route::post('logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
     });

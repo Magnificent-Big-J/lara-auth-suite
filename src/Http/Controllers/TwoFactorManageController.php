@@ -11,7 +11,7 @@ readonly class TwoFactorManageController
 {
     public function __construct(private ITwoFactorAuth $twofa) {}
 
-    public function status(Request $request)
+    public function status(Request $request): JsonResponse
     {
         return response()->json(['enabled' => $this->twofa->isEnabled($request->user())]);
     }
