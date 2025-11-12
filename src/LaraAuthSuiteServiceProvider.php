@@ -4,7 +4,6 @@ namespace Rainwaves\LaraAuthSuite;
 
 use App\Models\User;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Route;
 use Rainwaves\LaraAuthSuite\Contracts\AuthService;
 use Rainwaves\LaraAuthSuite\Contracts\PasswordResetService;
 use Rainwaves\LaraAuthSuite\Contracts\PermissionSyncService;
@@ -38,6 +37,7 @@ class LaraAuthSuiteServiceProvider extends ServiceProvider
             AuthService::class,
             function ($app) {
                 $userModel = $app['config']->get('authx.user_model', User::class);
+
                 return new AuthServiceImpl($userModel);
             }
         );
@@ -48,7 +48,7 @@ class LaraAuthSuiteServiceProvider extends ServiceProvider
 
         $this->app->bind(
             SessionAuthService::class,
-            fn($app) => new SessionAuthServiceImpl(
+            fn ($app) => new SessionAuthServiceImpl(
                 $app['config']->get('authx.user_model', User::class)
             )
         );
@@ -60,14 +60,14 @@ class LaraAuthSuiteServiceProvider extends ServiceProvider
 
         $this->app->singleton(
             PermissionSyncService::class,
-            fn($app) => new SpatiePermissionSyncService(
+            fn ($app) => new SpatiePermissionSyncService(
                 (bool) $app['config']->get('authx.permissions.enabled', true)
             )
         );
 
         $this->app->singleton(
             RegistrationService::class,
-            fn($app) => new RegistrationServiceImpl(
+            fn ($app) => new RegistrationServiceImpl(
                 $app->make(PermissionSyncService::class),
                 $app['config']->get('authx.user_model', User::class)
             )
@@ -87,5 +87,4 @@ class LaraAuthSuiteServiceProvider extends ServiceProvider
         $this->app['router']->aliasMiddleware('2fa.enforced', EnsureTwoFactorVerified::class);
 
     }
-
 }

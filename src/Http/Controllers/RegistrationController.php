@@ -3,20 +3,19 @@
 namespace Rainwaves\LaraAuthSuite\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Rainwaves\LaraAuthSuite\Contracts\RegistrationService;
+use Rainwaves\LaraAuthSuite\Exceptions\RegistrationDisabled;
+use Rainwaves\LaraAuthSuite\Exceptions\ValidationFailed;
 use Rainwaves\LaraAuthSuite\Http\Requests\RegisterRequest;
 use Rainwaves\LaraAuthSuite\Http\Resources\UserResource;
 use Rainwaves\LaraAuthSuite\Token\Contracts\TokenManager;
-use Rainwaves\LaraAuthSuite\Exceptions\RegistrationDisabled;
-use Rainwaves\LaraAuthSuite\Exceptions\ValidationFailed;
 
 readonly class RegistrationController
 {
     public function __construct(
         private RegistrationService $registrations,
-        private TokenManager        $tokens
+        private TokenManager $tokens
     ) {}
 
     public function register(RegisterRequest $request): JsonResponse

@@ -8,6 +8,7 @@ use OpenApi\Generator;
 class GenerateSwaggerDocsCommand extends Command
 {
     protected $signature = 'authsuite:generate-docs';
+
     protected $description = 'Generate OpenAPI (Swagger) documentation for Lara Auth Suite';
 
     public function handle(): int

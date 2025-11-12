@@ -12,11 +12,11 @@ class TwoFactorSecret extends Model
     protected $guarded = [];
 
     protected $casts = [
-        'secret'         => 'encrypted',        // Laravel encrypted cast
+        'secret' => 'encrypted',        // Laravel encrypted cast
         'recovery_codes' => 'encrypted:array',  // store as array, encrypted at rest
-        'enabled_at'     => 'datetime',
-        'revoked_at'     => 'datetime',
-        'meta'           => 'array',
+        'enabled_at' => 'datetime',
+        'revoked_at' => 'datetime',
+        'meta' => 'array',
     ];
 
     public function user(): BelongsTo

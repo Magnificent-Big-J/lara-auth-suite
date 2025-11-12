@@ -7,7 +7,9 @@ use Illuminate\Contracts\Auth\Authenticatable;
 interface ITwoFactorAuth
 {
     public function isVerified(Authenticatable $user): bool;
+
     public function markVerified(Authenticatable $user): void;
+
     /** Quick check the project can use to branch login flow. */
     public function isEnabled(Authenticatable $user): bool;
 

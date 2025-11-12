@@ -4,13 +4,16 @@ namespace Rainwaves\LaraAuthSuite\TwoFactor\Drivers;
 
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Hash;
-use Rainwaves\LaraAuthSuite\TwoFactor\Contracts\TwoFactorProvider;
 use Rainwaves\LaraAuthSuite\Domain\Models\TwoFactorChallenge;
 use Rainwaves\LaraAuthSuite\Domain\Notifications\TwoFactorEmailCode;
+use Rainwaves\LaraAuthSuite\TwoFactor\Contracts\TwoFactorProvider;
 
 class EmailOtpProvider implements TwoFactorProvider
 {
-    public function key(): string { return 'email'; }
+    public function key(): string
+    {
+        return 'email';
+    }
 
     public function challenge(Authenticatable $user): void
     {
@@ -26,14 +29,14 @@ class EmailOtpProvider implements TwoFactorProvider
             ->delete();
 
         TwoFactorChallenge::create([
-            'user_id'     => $user->getAuthIdentifier(),
-            'channel'     => 'email',
-            'code_hash'   => Hash::make($code),
-            'attempts'    => 0,
-            'max_attempts'=> (int) config('authx.2fa.otp.throttle_per_minute', 5),
-            'last_sent_at'=> now(),
-            'expires_at'  => $expires,
-            'meta'        => ['ip' => request()->ip(), 'ua' => request()->userAgent()],
+            'user_id' => $user->getAuthIdentifier(),
+            'channel' => 'email',
+            'code_hash' => Hash::make($code),
+            'attempts' => 0,
+            'max_attempts' => (int) config('authx.2fa.otp.throttle_per_minute', 5),
+            'last_sent_at' => now(),
+            'expires_at' => $expires,
+            'meta' => ['ip' => request()->ip(), 'ua' => request()->userAgent()],
         ]);
 
         // Send code via email
@@ -65,6 +68,7 @@ class EmailOtpProvider implements TwoFactorProvider
         }
 
         $challenge->markConsumed();
+
         return true;
     }
 }

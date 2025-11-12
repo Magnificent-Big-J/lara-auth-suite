@@ -1,4 +1,5 @@
 <?php
+
 namespace Rainwaves\LaraAuthSuite\Domain\Listeners;
 
 class LogSecurityEvent

@@ -1,13 +1,16 @@
 <?php
+
 namespace Rainwaves\LaraAuthSuite\TwoFactor\Drivers;
 
 use Illuminate\Contracts\Auth\Authenticatable;
-use Rainwaves\LaraAuthSuite\Domain\Models\TwoFactorSecret;
 use Rainwaves\LaraAuthSuite\TwoFactor\Contracts\TwoFactorProvider;
 
 class TotpProvider implements TwoFactorProvider
 {
-    public function key(): string { return 'totp'; }
+    public function key(): string
+    {
+        return 'totp';
+    }
 
     public function challenge(Authenticatable $user): void
     {
