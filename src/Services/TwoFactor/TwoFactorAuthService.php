@@ -4,7 +4,6 @@ namespace Rainwaves\LaraAuthSuite\Services\TwoFactor;
 
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Rainwaves\LaraAuthSuite\Domain\Models\TwoFactorChallenge;
 use Rainwaves\LaraAuthSuite\Domain\Models\TwoFactorSecret;
 use Rainwaves\LaraAuthSuite\Domain\Notifications\TwoFactorEmailCode;
@@ -22,17 +21,17 @@ class TwoFactorAuthService implements ITwoFactorAuth
             ->whereNull('revoked_at')
             ->where(function ($q) {
                 $q->whereNotNull('enabled_at')   // e.g., totp
-                ->orWhere('type', 'email');    // email OTP considered enabled once opted-in
+                    ->orWhere('type', 'email');    // email OTP considered enabled once opted-in
             })
             ->exists();
     }
 
     public function sendEmailOtp(Authenticatable $user): string
     {
-        $len   = (int) config('authx.2fa.otp.length', 6);
-        $code  = str_pad((string) random_int(0, (10 ** $len) - 1), $len, '0', STR_PAD_LEFT);
-        $ttl   = (int) config('authx.2fa.otp.expiry_seconds', 180);
-        $max   = (int) config('authx.2fa.otp.throttle_per_minute', 5);
+        $len = (int) config('authx.2fa.otp.length', 6);
+        $code = str_pad((string) random_int(0, (10 ** $len) - 1), $len, '0', STR_PAD_LEFT);
+        $ttl = (int) config('authx.2fa.otp.expiry_seconds', 180);
+        $max = (int) config('authx.2fa.otp.throttle_per_minute', 5);
 
         // clear any outstanding unconsumed email challenges
         TwoFactorChallenge::where('user_id', $user->getAuthIdentifier())
@@ -41,14 +40,14 @@ class TwoFactorAuthService implements ITwoFactorAuth
             ->delete();
 
         TwoFactorChallenge::create([
-            'user_id'      => $user->getAuthIdentifier(),
-            'channel'      => 'email',
-            'code_hash'    => Hash::make($code),
-            'attempts'     => 0,
+            'user_id' => $user->getAuthIdentifier(),
+            'channel' => 'email',
+            'code_hash' => Hash::make($code),
+            'attempts' => 0,
             'max_attempts' => $max,
             'last_sent_at' => now(),
-            'expires_at'   => now()->addSeconds($ttl),
-            'meta'         => ['ip' => request()->ip(), 'ua' => request()->userAgent()],
+            'expires_at' => now()->addSeconds($ttl),
+            'meta' => ['ip' => request()->ip(), 'ua' => request()->userAgent()],
         ]);
 
         // notify via email
@@ -60,10 +59,10 @@ class TwoFactorAuthService implements ITwoFactorAuth
     public function sendSmsOtp(Authenticatable $user, string $phoneNumber): string
     {
         // Placeholder: wire your Sms provider/driver here and send the raw $code
-        $len   = (int) config('authx.2fa.otp.length', 6);
-        $code  = str_pad((string) random_int(0, (10 ** $len) - 1), $len, '0', STR_PAD_LEFT);
-        $ttl   = (int) config('authx.2fa.otp.expiry_seconds', 180);
-        $max   = (int) config('authx.2fa.otp.throttle_per_minute', 5);
+        $len = (int) config('authx.2fa.otp.length', 6);
+        $code = str_pad((string) random_int(0, (10 ** $len) - 1), $len, '0', STR_PAD_LEFT);
+        $ttl = (int) config('authx.2fa.otp.expiry_seconds', 180);
+        $max = (int) config('authx.2fa.otp.throttle_per_minute', 5);
 
         TwoFactorChallenge::where('user_id', $user->getAuthIdentifier())
             ->where('channel', 'sms')
@@ -71,20 +70,21 @@ class TwoFactorAuthService implements ITwoFactorAuth
             ->delete();
 
         TwoFactorChallenge::create([
-            'user_id'      => $user->getAuthIdentifier(),
-            'channel'      => 'sms',
-            'code_hash'    => Hash::make($code),
-            'attempts'     => 0,
+            'user_id' => $user->getAuthIdentifier(),
+            'channel' => 'sms',
+            'code_hash' => Hash::make($code),
+            'attempts' => 0,
             'max_attempts' => $max,
             'last_sent_at' => now(),
-            'expires_at'   => now()->addSeconds($ttl),
-            'meta'         => ['ip' => request()->ip(), 'ua' => request()->userAgent(), 'phone' => $phoneNumber],
+            'expires_at' => now()->addSeconds($ttl),
+            'meta' => ['ip' => request()->ip(), 'ua' => request()->userAgent(), 'phone' => $phoneNumber],
         ]);
 
         // TODO: dispatch SMS via your SmsSender here.
 
         return $code;
     }
+
     public function enableAuthenticatorApp(Authenticatable $user): string
     {
 
@@ -158,7 +158,7 @@ class TwoFactorAuthService implements ITwoFactorAuth
 
         return $tokenId
             ? "authx:2fa:token:{$tokenId}"
-            : "authx:2fa:session:" . (session()->getId() ?? 'anon');
+            : 'authx:2fa:session:'.(session()->getId() ?? 'anon');
     }
 
     // 🔁 call markVerified() when OTP verification succeeds
@@ -200,13 +200,20 @@ class TwoFactorAuthService implements ITwoFactorAuth
     {
         $alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
         $bits = '';
-        foreach (str_split($data) as $c) $bits .= str_pad(decbin(ord($c)), 8, '0', STR_PAD_LEFT);
+        foreach (str_split($data) as $c) {
+            $bits .= str_pad(decbin(ord($c)), 8, '0', STR_PAD_LEFT);
+        }
         $output = '';
         foreach (str_split($bits, 5) as $chunk) {
-            if (strlen($chunk) < 5) $chunk = str_pad($chunk, 5, '0');
+            if (strlen($chunk) < 5) {
+                $chunk = str_pad($chunk, 5, '0');
+            }
             $output .= $alphabet[bindec($chunk)];
         }
-        while (strlen($output) % 8 !== 0) $output .= '=';
+        while (strlen($output) % 8 !== 0) {
+            $output .= '=';
+        }
+
         return $output;
     }
 }

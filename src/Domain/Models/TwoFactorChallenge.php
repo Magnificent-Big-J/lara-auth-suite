@@ -15,9 +15,9 @@ class TwoFactorChallenge extends Model
 
     protected $casts = [
         'last_sent_at' => 'datetime',
-        'expires_at'   => 'datetime',
-        'consumed_at'  => 'datetime',
-        'meta'         => 'array',
+        'expires_at' => 'datetime',
+        'consumed_at' => 'datetime',
+        'meta' => 'array',
     ];
 
     public function user(): BelongsTo

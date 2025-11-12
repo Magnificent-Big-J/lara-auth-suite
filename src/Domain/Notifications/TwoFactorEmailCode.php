@@ -38,12 +38,12 @@ class TwoFactorEmailCode extends Notification implements ShouldQueue
 
         return (new MailMessage)
             ->subject('🔐 Your Verification Code')
-            ->greeting('Hello ' . ($notifiable->name ?? ''))
+            ->greeting('Hello '.($notifiable->name ?? ''))
             ->line('Use the code below to complete your sign-in or verification process.')
             ->line('')
-            ->line('**' . $this->code . '**')
+            ->line('**'.$this->code.'**')
             ->line('')
-            ->line("This code will expire in {$minutes} minute" . ($minutes > 1 ? 's' : '') . '.')
+            ->line("This code will expire in {$minutes} minute".($minutes > 1 ? 's' : '').'.')
             ->line('If you did not request this code, you can safely ignore this email.')
             ->salutation('— The Rainwaves Security Team');
     }

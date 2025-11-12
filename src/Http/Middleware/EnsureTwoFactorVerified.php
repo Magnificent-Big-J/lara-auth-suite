@@ -1,4 +1,5 @@
 <?php
+
 namespace Rainwaves\LaraAuthSuite\Http\Middleware;
 
 use Closure;

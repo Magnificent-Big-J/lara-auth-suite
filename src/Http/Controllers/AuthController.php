@@ -15,7 +15,7 @@ use Rainwaves\LaraAuthSuite\Token\Contracts\TokenManager;
 readonly class AuthController
 {
     public function __construct(
-        private AuthService  $auth,
+        private AuthService $auth,
         private TokenManager $tokens
     ) {}
 
@@ -36,10 +36,10 @@ readonly class AuthController
         );
 
         return response()->json([
-            'status'     => 'ok',
-            'token'      => $token,
+            'status' => 'ok',
+            'token' => $token,
             'token_type' => 'Bearer',
-            'user'       => new UserResource($user),
+            'user' => new UserResource($user),
         ]);
     }
 
@@ -51,6 +51,7 @@ readonly class AuthController
     public function logout(Request $request): JsonResponse
     {
         $this->tokens->revokeCurrent($request->user());
+
         return response()->json(['status' => 'ok', 'message' => 'Logged out']);
     }
 }

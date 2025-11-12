@@ -25,5 +25,4 @@ class UserResource extends JsonResource
 
         return $data;
     }
-
 }

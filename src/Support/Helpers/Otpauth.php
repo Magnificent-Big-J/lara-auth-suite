@@ -1,4 +1,5 @@
 <?php
+
 namespace Rainwaves\LaraAuthSuite\Support\Helpers;
 
 final class Otpauth
@@ -7,6 +8,7 @@ final class Otpauth
     {
         $issuerEnc = rawurlencode($issuer);
         $accountEnc = rawurlencode($account);
+
         return "otpauth://totp/{$issuerEnc}:{$accountEnc}?secret={$secret}&issuer={$issuerEnc}&period={$period}&digits={$digits}&algorithm=SHA1";
     }
 }

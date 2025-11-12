@@ -10,6 +10,7 @@ class SanctumTokenManager implements TokenManager
     public function issue(Authenticatable $user, array $abilities = [], ?int $expiresMinutes = null): string
     {
         $token = $user->createToken('api-token', $abilities);
+
         // Sanctum expiry is usually handled via token middleware or custom policies;
         // we’ll extend this later if you choose time-bound tokens.
         return $token->plainTextToken;

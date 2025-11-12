@@ -5,7 +5,7 @@ return [
     'mode' => 'both',
     'user_model' => null,
 
-    'features' => ['password_reset','two_factor','tokens','devices'],
+    'features' => ['password_reset', 'two_factor', 'tokens', 'devices'],
     '2fa' => [
         'channels' => ['email'],
         'enforcement' => 'optional',
@@ -20,12 +20,12 @@ return [
         'default_roles' => [],                 // e.g. ['client']
         'default_permissions' => [],           // e.g. ['users.view']
         'rules' => [                           // host can override entirely in app/config/authx.php
-            'name' => ['required','string','max:255'],
-            'email' => ['required','string','email','max:255','unique:users,email'],
-            'password' => ['required','string','min:8','confirmed'],
-            'roles' => ['sometimes','array'],
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'roles' => ['sometimes', 'array'],
             'roles.*' => ['string'],
-            'permissions' => ['sometimes','array'],
+            'permissions' => ['sometimes', 'array'],
             'permissions.*' => ['string'],
         ],
         // Optional hook to supply rules dynamically (class must implement ProvidesValidationRules)

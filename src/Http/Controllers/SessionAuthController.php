@@ -24,7 +24,7 @@ readonly class SessionAuthController
 
         return response()->json([
             'status' => 'ok',
-            'user'   => new UserResource($user),
+            'user' => new UserResource($user),
         ]);
     }
 
@@ -36,6 +36,7 @@ readonly class SessionAuthController
     public function logout(Request $request): JsonResponse
     {
         $this->service->logout();
+
         return response()->json(['status' => 'ok', 'message' => 'Logged out']);
     }
 }

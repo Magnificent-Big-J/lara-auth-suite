@@ -12,7 +12,7 @@ readonly class RegistrationServiceImpl implements RegistrationService
 {
     public function __construct(
         private PermissionSyncService $permissionSync,
-        private string                $userModel // from config('authx.user_model')
+        private string $userModel // from config('authx.user_model')
     ) {}
 
     public function register(array $data): Authenticatable

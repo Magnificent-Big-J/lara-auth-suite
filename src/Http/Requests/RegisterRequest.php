@@ -13,8 +13,10 @@ class RegisterRequest extends FormRequest
         if ($providerClass && class_exists($providerClass)) {
             /** @var ProvidesValidationRules $prov */
             $prov = app($providerClass);
+
             return $prov->for('register');
         }
+
         return config('authx.registration.rules', []);
     }
 }
