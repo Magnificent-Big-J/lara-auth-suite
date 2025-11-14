@@ -81,10 +81,14 @@ class LaraAuthSuiteServiceProvider extends ServiceProvider
             __DIR__.'/Config/authx.php' => config_path('authx.php'),
         ], 'authx-config');
 
+        $this->publishes([
+            __DIR__.'/Database/migrations' => database_path('migrations'),
+        ], 'authx-migrations');
+
         $this->loadMigrationsFrom(__DIR__.'/Database/migrations');
 
         $this->loadRoutesFrom(__DIR__.'/Routes/api.php');
         $this->app['router']->aliasMiddleware('2fa.enforced', EnsureTwoFactorVerified::class);
-
     }
+
 }

@@ -3,11 +3,13 @@
     "description": "Laravel API auth suite: Sanctum tokens & session modes, password reset, and 2FA.",
     "type": "library",
     "license": "MIT",
+
     "autoload": {
         "psr-4": {
             "Rainwaves\\LaraAuthSuite\\": "src/"
         }
     },
+
     "extra": {
         "laravel": {
             "providers": [
@@ -15,10 +17,12 @@
             ]
         }
     },
+
     "require": {
-        "php": "^8.2",
-        "laravel/framework": "^10.0|^11.0"
+        "php": "^8.2|^8.3|^8.4",
+        "laravel/framework": "^10.0|^11.0|^12.0"
     },
+
     "require-dev": {
         "laravel/sanctum": "^4.0",
         "orchestra/testbench": "^9.0",
@@ -28,8 +32,10 @@
         "doctrine/annotations": "^2.0",
         "laravel/pint": "^1.25"
     },
-    "minimum-stability": "stable",
+
+    "minimum-stability": "dev",
     "prefer-stable": true,
+
     "config": {
         "allow-plugins": {
             "pestphp/pest-plugin": true
