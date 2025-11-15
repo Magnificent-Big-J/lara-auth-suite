@@ -13,49 +13,61 @@ class TwoFactorEmailCode extends Notification implements ShouldQueue
     use Queueable;
 
     /**
-     * @param  string  $code  The one-time verification code.
-     * @param  Carbon  $expiresAt  The expiration timestamp.
+     * @param  string  $code        The one-time verification code.
+     * @param  int     $ttlSeconds  How long the code is valid, in seconds.
      */
     public function __construct(
         protected string $code,
-        protected Carbon $expiresAt
+        protected int $ttlSeconds
     ) {}
 
-    /**
-     * Define the notification channels.
-     */
     public function via($notifiable): array
     {
         return ['mail'];
     }
 
-    /**
-     * Build the mail message for the OTP email.
-     */
     public function toMail($notifiable): MailMessage
     {
-        $minutes = $this->expiresAt->diffInMinutes(now());
+        $expiryText = $this->humanExpiryText();
+
+        $name = trim((string) ($notifiable->name ?? ''));
+        $greetingName = $name !== '' ? $name : 'there';
 
         return (new MailMessage)
             ->subject('🔐 Your Verification Code')
-            ->greeting('Hello '.($notifiable->name ?? ''))
+            ->greeting('Hello '.$greetingName)
             ->line('Use the code below to complete your sign-in or verification process.')
             ->line('')
             ->line('**'.$this->code.'**')
             ->line('')
-            ->line("This code will expire in {$minutes} minute".($minutes > 1 ? 's' : '').'.')
+            ->line($expiryText)
             ->line('If you did not request this code, you can safely ignore this email.')
             ->salutation('— The Rainwaves Security Team');
     }
 
-    /**
-     * Optional: custom array representation (for database channel, if needed).
-     */
     public function toArray($notifiable): array
     {
         return [
-            'code' => $this->code,
-            'expires_at' => $this->expiresAt->toIso8601String(),
+            'code'       => $this->code,
+            'expires_at' => Carbon::now()->addSeconds($this->ttlSeconds)->toIso8601String(),
         ];
+    }
+
+    /**
+     * Simple, human-friendly expiry text based only on TTL.
+     */
+    protected function humanExpiryText(): string
+    {
+        if ($this->ttlSeconds <= 0) {
+            return 'This code has expired or will expire momentarily.';
+        }
+
+        if ($this->ttlSeconds < 60) {
+            return 'This code will expire in less than a minute.';
+        }
+
+        $minutes = (int) ceil($this->ttlSeconds / 60);
+
+        return 'This code will expire in '.$minutes.' minute'.($minutes === 1 ? '' : 's').'.';
     }
 }
