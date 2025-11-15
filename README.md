@@ -1,149 +1,190 @@
-🌊 Rainwaves Lara Auth Suite
+# 🌊 Rainwaves Lara Auth Suite
 
 Modern, flexible authentication for Laravel APIs & SPAs.
 
 Plug-and-play authentication for Laravel 10/11, supporting both API token auth (Sanctum) and session-based auth for SPAs — with password resets, optional 2FA, and full role/permission support.
 
-🚀 Overview
+---
+
+## 🚀 Overview
 
 Rainwaves/Lara Auth Suite gives you full authentication without writing boilerplate:
 
-Token authentication for mobile apps or external APIs
+- Token authentication for mobile apps or external APIs
+- Session authentication for SPAs (Vue / React / Inertia / Livewire)
+- Unified password reset flow
+- Optional Two-Factor Authentication (email/SMS/TOTP)
+- Automatic role & permission assignment (Spatie Permissions)
 
-Session authentication for SPAs (Vue / React / Inertia / Livewire)
+### Ideal for:
 
-Unified password reset flow
+- SaaS platforms
+- Admin dashboards
+- Multi-tenant SPAs
+- Hybrid apps needing both tokens + sessions
 
-Optional Two-Factor Authentication (email/SMS/TOTP)
+---
 
-Automatic role & permission assignment (Spatie Permissions)
+## ✨ Features
 
-This is ideal for:
+| Feature | Status | Description |
+|--------|--------|-------------|
+| Sanctum PAT login | ✅ Done | Token-based API authentication |
+| Session authentication | ✅ Done | Laravel guard + CSRF protection |
+| Password reset (email) | ✅ Done | Full reset flow with throttle |
+| 2FA: Email OTP | 🔄 Partial | Enabled if configured |
+| 2FA: TOTP | 🔜 Planned | Google Authenticator (QR + verification) |
+| 2FA: SMS | 🔜 Planned | Twilio / Vonage driver |
+| Trusted devices | 🔜 Planned | Device remembering |
+| Token/session/device mgmt | 🔜 Planned | Revoke, audit |
 
-SaaS platforms
+---
 
-Admin dashboards
+## ⚙️ Installation
 
-Multi-tenant SPAs
+Install via Composer:
 
-Hybrid apps needing both tokens + sessions
-
-✨ Features
-Feature	Status	Description
-Sanctum PAT login	✅ Done	Token-based API authentication.
-Session authentication	✅ Done	Classic Laravel guard for SPA + CSRF.
-Password reset (email)	✅ Done	Full reset-link + throttling.
-2FA: Email OTP	🔄 Partial	Enabled if configured.
-2FA: TOTP (Google Authenticator)	🔜 Planned	QR provisioning, verification.
-2FA: SMS (Twilio/Vonage)	🔜 Planned	Configurable SMS provider.
-Trusted devices	🔜 Planned	Device remembering.
-Token/session/device management	🔜 Planned	Revoke + audit.
-
-⚙️ Installation
-
+```bash
 composer require rainwaves/lara-auth-suite
+```
 
+Publish configuration:
 
-Then publish the config:
-
+```bash
 php artisan vendor:publish --provider="Rainwaves\\LaraAuthSuite\\LaraAuthSuiteServiceProvider" --tag=authx-config
-
+```
 
 This publishes:
 
+```
 config/authx.php
+```
 
-📦 Usage
+---
 
-Below are the built-in endpoints provided by the package.
+## 📦 Usage
 
-🔐 1. Login (Session Mode)
+Below are the built-in authentication endpoints.
 
-POST /auth/login
+---
 
+### 1. Login (Session Mode)
+
+**POST /auth/login**
+
+Payload:
+
+```json
 {
-"email": "admin@example.com",
-"password": "secret",
-"remember": true
+  "email": "admin@example.com",
+  "password": "secret",
+  "remember": true
 }
-
+```
 
 Response:
 
+```json
 {
-"status": "ok",
-"user": { ... }
+  "status": "ok",
+  "user": {}
 }
+```
 
-🔑 2. Login (Token Mode / API Clients)
+---
 
-POST /auth/token/login
+### 2. Login (Token Mode / API Clients)
+
+**POST /auth/token/login**
 
 Response:
 
+```json
 {
-"token": "plain-text-token",
-"abilities": ["*"]
+  "token": "plain-text-token",
+  "abilities": ["*"]
 }
+```
 
-🙋‍♂️ 3. Get Current User
+---
+
+### 3. Get Current User
 
 Requires either:
-✔ Session cookie
-or
-✔ Bearer token
 
-GET /auth/me
+- Session cookie
+- OR Bearer token
 
-🚪 4. Logout
+**GET /auth/me**
+
+---
+
+### 4. Logout
 
 Session:
 
+```
 POST /auth/logout
-
+```
 
 Token:
 
+```
 POST /auth/token/logout
+```
 
-🔁 5. Forgot Password
-POST /auth/password/forgot
+---
 
+### 5. Forgot Password
 
-Payload:
+**POST /auth/password/forgot**
 
+```json
 { "email": "admin@example.com" }
+```
 
-🔒 6. Reset Password
-POST /auth/password/reset
+---
 
+### 6. Reset Password
 
-Payload:
+**POST /auth/password/reset**
 
+```json
 {
-"email": "admin@example.com",
-"token": "reset-token",
-"password": "newpassword",
-"password_confirmation": "newpassword"
+  "email": "admin@example.com",
+  "token": "reset-token",
+  "password": "newpassword",
+  "password_confirmation": "newpassword"
 }
+```
 
-🛡️ 7. Two-Factor Authentication (Optional)
-Email OTP
+---
+
+### 7. Two-Factor Authentication (Optional)
+
+Email OTP:
+
+```
 POST /auth/session/2fa/email
 POST /auth/session/2fa/verify-otp
 POST /auth/session/2fa/disable
+```
 
-TOTP (future)
+TOTP (future):
+
+```
 POST /auth/session/2fa/totp/enable
 POST /auth/session/2fa/totp/verify
+```
 
-🔧 Configuration (config/authx.php)
+---
 
-Example:
+## 🔧 Config Example (`config/authx.php`)
 
+```php
 return [
-'route_prefix' => 'auth',
-'mode' => 'both', // session, token, both
+    'route_prefix' => 'auth',
+    'mode' => 'both',
 
     'features' => [
         'password_reset',
@@ -164,92 +205,65 @@ return [
         'enforcement' => 'optional',
     ],
 ];
+```
 
-🧪 Local Playground Development
+---
 
-To develop the package locally, symlink using Composer’s "path" repo:
+## 🧩 Frontend Integration (SPA)
 
-"repositories": [
-{
-"type": "path",
-"url": "packages/lara-auth-suite",
-"options": { "symlink": true }
-}
-]
+A dedicated frontend guide (Vue / Nuxt / React) will cover:
 
+- Login form
+- Pinia/Zustand auth store
+- Forgot/reset password
+- Session cookies
+- CSRF handling
+- Auto-refresh bootstrap
+- 2FA screens
+- Role & permission-based UI
 
-Then:
+---
 
-composer update rainwaves/lara-auth-suite
+## 🛣 Roadmap
 
-🧩 Frontend Integration (SPA)
+| Phase | Feature |
+|-------|---------|
+| 1 | Token auth (done) |
+| 2 | Session auth (done) |
+| 3 | Password reset (done) |
+| 4 | 2FA Email |
+| 5 | 2FA TOTP |
+| 6 | 2FA SMS |
+| 7 | Trusted devices |
+| 8 | Token/session management |
+| 9 | Frontend documentation |
+| 10 | v1.0 stable release |
 
-Full frontend documentation (Vue 3 / Nuxt / React) will be provided in a separate guide.
-This includes:
+---
 
-login flow
+## 🛡 Security
 
-session cookies
+Report vulnerabilities to:
 
-CSRF
+📧 **security@rainwaves.dev**
 
-forgot/reset
+---
 
-OTP verification
-
-storing user + abilities in Pinia/Zustand
-
-👉 We’ll create a NEW CHAT only for frontend so you can paste code directly into your SPA.
-
-🛣 Roadmap
-Phase	Feature
-1	Token auth (done)
-2	Session auth (done)
-3	Password reset (done)
-4	2FA Email
-5	2FA TOTP
-6	2FA SMS
-7	Trusted devices
-8	Token/session management
-9	Complete frontend documentation
-10	v1.0 stable release
-🛡 Security
-
-If you discover a security issue, please email:
-
-security@rainwaves.dev
-
-📄 License
+## 📄 License
 
 MIT © Rainwaves
 
-❤️ Credits
+---
 
-Created with love by Rainwaves
+## ❤️ Credits
+
+Created with love by **Rainwaves**  
 Building secure, modern SaaS authentication for Laravel.
 
-✅ READY TO CONTINUE?
+---
 
-If you're ready:
-👉 Say: “Start the frontend-only chat”
-and I’ll open a clean conversation dedicated to:
+## ✅ Ready for the Frontend Guide?
 
-Vue 3 login page
+Say:
 
-Pinia auth store
-
-Forgot password page
-
-Reset password page
-
-Users list (admin only)
-
-Roles/permissions integration
-
-SPA session flow, CSRF, cookies
-
-2FA UI
-
-Auto-refresh & bootstrap logic
-
-Your entire frontend will be production ready.
+**"Start the frontend-only chat"**
