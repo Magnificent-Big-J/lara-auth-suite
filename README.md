@@ -2,13 +2,6 @@
 
 Modern, flexible authentication for Laravel APIs & SPAs.
 
-
-
-
-
-
-
-
 Plug-and-play authentication for Laravel 10/11, supporting both API token auth (Sanctum) and session-based auth for SPAs — with password resets, optional 2FA, and full role/permission support.
 
 🚀 Overview
@@ -45,7 +38,9 @@ Password reset (email)	✅ Done	Full reset-link + throttling.
 2FA: SMS (Twilio/Vonage)	🔜 Planned	Configurable SMS provider.
 Trusted devices	🔜 Planned	Device remembering.
 Token/session/device management	🔜 Planned	Revoke + audit.
+
 ⚙️ Installation
+
 composer require rainwaves/lara-auth-suite
 
 
