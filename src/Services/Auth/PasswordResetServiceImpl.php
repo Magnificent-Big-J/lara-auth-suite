@@ -3,6 +3,7 @@
 namespace Rainwaves\LaraAuthSuite\Services\Auth;
 
 use Illuminate\Auth\Events\PasswordReset;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;

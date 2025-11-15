@@ -4,7 +4,9 @@ return [
     'route_prefix' => 'auth',
     'mode' => 'both',
     'user_model' => null,
-
+    'frontend' => [
+        'password_reset_url' => env('AUTHX_FRONTEND_RESET_URL', '/auth/reset-password'),
+    ],
     'features' => ['password_reset', 'two_factor', 'tokens', 'devices'],
     '2fa' => [
         'channels' => ['email'],

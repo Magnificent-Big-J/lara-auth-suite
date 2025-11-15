@@ -19,6 +19,7 @@ use Rainwaves\LaraAuthSuite\Services\TwoFactor\TwoFactorAuthService;
 use Rainwaves\LaraAuthSuite\Token\Contracts\TokenManager;
 use Rainwaves\LaraAuthSuite\Token\Sanctum\SanctumTokenManager;
 use Rainwaves\LaraAuthSuite\TwoFactor\Contracts\ITwoFactorAuth;
+use Illuminate\Auth\Notifications\ResetPassword;
 
 class LaraAuthSuiteServiceProvider extends ServiceProvider
 {
@@ -89,6 +90,23 @@ class LaraAuthSuiteServiceProvider extends ServiceProvider
 
         $this->loadRoutesFrom(__DIR__.'/Routes/api.php');
         $this->app['router']->aliasMiddleware('2fa.enforced', EnsureTwoFactorVerified::class);
+        $this->configurePasswordResetUrl();
+
     }
 
+    protected function configurePasswordResetUrl(): void
+    {
+        ResetPassword::createUrlUsing(function ($user, string $token) {
+            // Where should the SPA handle password reset?
+            $base = config('authx.frontend.password_reset_url', '/auth/reset-password');
+
+            // Allow absolute URL or path-relative to APP_URL
+            $url = str_starts_with($base, 'http')
+                ? $base
+                : rtrim(config('app.url'), '/') . '/' . ltrim($base, '/');
+
+            // Standard token/email query params for your Vue page
+            return $url.'?token='.$token.'&email='.urlencode($user->email);
+        });
+    }
 }
