@@ -231,7 +231,7 @@ A dedicated frontend guide (Vue / Nuxt / React) will cover:
 | 1 | Token auth (done) |
 | 2 | Session auth (done) |
 | 3 | Password reset (done) |
-| 4 | 2FA Email |
+| 4 | 2FA Email (done)|
 | 5 | 2FA TOTP |
 | 6 | 2FA SMS |
 | 7 | Trusted devices |
