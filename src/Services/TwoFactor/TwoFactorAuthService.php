@@ -4,6 +4,7 @@ namespace Rainwaves\LaraAuthSuite\Services\TwoFactor;
 
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Cache; // 👈 ADD THIS
 use Rainwaves\LaraAuthSuite\Domain\Models\TwoFactorChallenge;
 use Rainwaves\LaraAuthSuite\Domain\Models\TwoFactorSecret;
 use Rainwaves\LaraAuthSuite\Domain\Notifications\TwoFactorEmailCode;
@@ -21,17 +22,17 @@ class TwoFactorAuthService implements ITwoFactorAuth
             ->whereNull('revoked_at')
             ->where(function ($q) {
                 $q->whereNotNull('enabled_at')   // e.g., totp
-                    ->orWhere('type', 'email');    // email OTP considered enabled once opted-in
+                ->orWhere('type', 'email');    // email OTP considered enabled once opted-in
             })
             ->exists();
     }
 
     public function sendEmailOtp(Authenticatable $user): string
     {
-        $len = (int) config('authx.2fa.otp.length', 6);
+        $len  = (int) config('authx.2fa.otp.length', 6);
         $code = str_pad((string) random_int(0, (10 ** $len) - 1), $len, '0', STR_PAD_LEFT);
-        $ttl = (int) config('authx.2fa.otp.expiry_seconds', 180);
-        $max = (int) config('authx.2fa.otp.throttle_per_minute', 5);
+        $ttl  = (int) config('authx.2fa.otp.expiry_seconds', 180);
+        $max  = (int) config('authx.2fa.otp.throttle_per_minute', 5);
 
         // clear any outstanding unconsumed email challenges
         TwoFactorChallenge::where('user_id', $user->getAuthIdentifier())
@@ -40,29 +41,27 @@ class TwoFactorAuthService implements ITwoFactorAuth
             ->delete();
 
         TwoFactorChallenge::create([
-            'user_id' => $user->getAuthIdentifier(),
-            'channel' => 'email',
-            'code_hash' => Hash::make($code),
-            'attempts' => 0,
+            'user_id'      => $user->getAuthIdentifier(),
+            'channel'      => 'email',
+            'code_hash'    => Hash::make($code),
+            'attempts'     => 0,
             'max_attempts' => $max,
             'last_sent_at' => now(),
-            'expires_at' => now()->addSeconds($ttl),
-            'meta' => ['ip' => request()->ip(), 'ua' => request()->userAgent()],
+            'expires_at'   => now()->addSeconds($ttl),
+            'meta'         => ['ip' => request()->ip(), 'ua' => request()->userAgent()],
         ]);
 
-        // notify via email
-        $user->notify(new TwoFactorEmailCode($code, now()->addSeconds($ttl)));
+        $user->notify(new TwoFactorEmailCode($code, $ttl));
 
         return $code;
     }
 
     public function sendSmsOtp(Authenticatable $user, string $phoneNumber): string
     {
-        // Placeholder: wire your Sms provider/driver here and send the raw $code
-        $len = (int) config('authx.2fa.otp.length', 6);
+        $len  = (int) config('authx.2fa.otp.length', 6);
         $code = str_pad((string) random_int(0, (10 ** $len) - 1), $len, '0', STR_PAD_LEFT);
-        $ttl = (int) config('authx.2fa.otp.expiry_seconds', 180);
-        $max = (int) config('authx.2fa.otp.throttle_per_minute', 5);
+        $ttl  = (int) config('authx.2fa.otp.expiry_seconds', 180);
+        $max  = (int) config('authx.2fa.otp.throttle_per_minute', 5);
 
         TwoFactorChallenge::where('user_id', $user->getAuthIdentifier())
             ->where('channel', 'sms')
@@ -70,25 +69,28 @@ class TwoFactorAuthService implements ITwoFactorAuth
             ->delete();
 
         TwoFactorChallenge::create([
-            'user_id' => $user->getAuthIdentifier(),
-            'channel' => 'sms',
-            'code_hash' => Hash::make($code),
-            'attempts' => 0,
+            'user_id'      => $user->getAuthIdentifier(),
+            'channel'      => 'sms',
+            'code_hash'    => Hash::make($code),
+            'attempts'     => 0,
             'max_attempts' => $max,
             'last_sent_at' => now(),
-            'expires_at' => now()->addSeconds($ttl),
-            'meta' => ['ip' => request()->ip(), 'ua' => request()->userAgent(), 'phone' => $phoneNumber],
+            'expires_at'   => now()->addSeconds($ttl),
+            'meta'         => [
+                'ip'    => request()->ip(),
+                'ua'    => request()->userAgent(),
+                'phone' => $phoneNumber,
+            ],
         ]);
 
-        // TODO: dispatch SMS via your SmsSender here.
+        // plug into your SMS provider here
 
         return $code;
     }
 
     public function enableAuthenticatorApp(Authenticatable $user): string
     {
-
-        $raw = random_bytes(20);
+        $raw    = random_bytes(20);
         $base32 = rtrim($this->base32Encode($raw), '=');
 
         TwoFactorSecret::updateOrCreate(
@@ -101,8 +103,6 @@ class TwoFactorAuthService implements ITwoFactorAuth
 
     public function verifyAuthenticatorApp(Authenticatable $user, string $code): bool
     {
-        // TODO: Replace with real TOTP verify using otphp:
-        // $secret = TwoFactorSecret::for user,type=totp; verify $code; if ok, set enabled_at=now
         $secret = TwoFactorSecret::where('user_id', $user->getAuthIdentifier())
             ->where('type', 'totp')
             ->whereNull('revoked_at')
@@ -112,9 +112,37 @@ class TwoFactorAuthService implements ITwoFactorAuth
             return false;
         }
 
-        // Minimal placeholder (ALWAYS replace with proper TOTP library verification)
-        // This placeholder intentionally returns false to avoid false sense of security.
-        return false;
+        // Normalise user input (remove spaces etc.)
+        $code   = preg_replace('/\s+/', '', trim($code));
+        $digits = (int) config('authx.2fa.totp_digits', 6);
+        $period = (int) config('authx.2fa.totp_period', 30); // 30s steps
+        $window = (int) config('authx.2fa.totp_window', 1); // +/- 1 step
+
+        $now   = time();
+        $valid = false;
+
+        // Check current time-step and a small window around it
+        for ($i = -$window; $i <= $window; $i++) {
+            $counter = (int) floor(($now / $period)) + $i;
+
+            if ($this->verifyTotpForCounter($secret->secret, $code, $counter, $digits)) {
+                $valid = true;
+                break;
+            }
+        }
+
+        if (! $valid) {
+            return false;
+        }
+
+        // Mark TOTP as enabled
+        $secret->enabled_at = now();
+        $secret->save();
+
+        // Mark this session / token as 2FA-verified
+        $this->markVerified($user);
+
+        return true;
     }
 
     public function disableTwoFactor(Authenticatable $user): void
@@ -135,33 +163,28 @@ class TwoFactorAuthService implements ITwoFactorAuth
         );
     }
 
-    /** Mark this session/token as 2FA-verified for a short TTL (step-up). */
     public function markVerified(Authenticatable $user): void
     {
         $ttl = (int) config('authx.2fa.verification_ttl_seconds', 600);
         Cache::put($this->verificationCacheKey($user), true, $ttl);
     }
 
-    /** Check if current session/token is within verified window. */
     public function isVerified(Authenticatable $user): bool
     {
         return (bool) Cache::get($this->verificationCacheKey($user), false);
     }
 
-    /** Where to store the “step-up verified” flag (token-aware or session-aware). */
     protected function verificationCacheKey(Authenticatable $user): string
     {
-        // If using Sanctum PATs (token mode), bind to token id; otherwise bind to session id (session mode)
         $tokenId = method_exists($user, 'currentAccessToken') && $user->currentAccessToken()
             ? $user->currentAccessToken()->id
             : null;
 
         return $tokenId
             ? "authx:2fa:token:{$tokenId}"
-            : 'authx:2fa:session:'.(session()->getId() ?? 'anon');
+            : 'authx:2fa:session:' . (session()->getId() ?? 'anon');
     }
 
-    // 🔁 call markVerified() when OTP verification succeeds
     public function verifyOtp(Authenticatable $user, string $code): bool
     {
         $challenge = TwoFactorChallenge::where('user_id', $user->getAuthIdentifier())
@@ -189,31 +212,124 @@ class TwoFactorAuthService implements ITwoFactorAuth
             );
         }
 
-        // ✅ mark this token/session as step-up verified
         $this->markVerified($user);
 
         return true;
     }
 
-    /** Lightweight Base32 encoder (RFC 4648). */
+    // ── Base32 helpers ──────────────────────────────────
+
     protected function base32Encode(string $data): string
     {
         $alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-        $bits = '';
+        $bits     = '';
+
         foreach (str_split($data) as $c) {
             $bits .= str_pad(decbin(ord($c)), 8, '0', STR_PAD_LEFT);
         }
+
         $output = '';
+
         foreach (str_split($bits, 5) as $chunk) {
             if (strlen($chunk) < 5) {
                 $chunk = str_pad($chunk, 5, '0');
             }
             $output .= $alphabet[bindec($chunk)];
         }
+
         while (strlen($output) % 8 !== 0) {
             $output .= '=';
         }
 
         return $output;
+    }
+
+    protected function base32Decode(string $b32): string
+    {
+        $alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+
+        $b32 = strtoupper($b32);
+        $b32 = preg_replace('/[^A-Z2-7]/', '', $b32);
+
+        $bits = '';
+        foreach (str_split($b32) as $char) {
+            $pos = strpos($alphabet, $char);
+            if ($pos === false) {
+                continue;
+            }
+            $bits .= str_pad(decbin($pos), 5, '0', STR_PAD_LEFT);
+        }
+
+        $output = '';
+        foreach (str_split($bits, 8) as $byte) {
+            if (strlen($byte) < 8) {
+                continue;
+            }
+            $output .= chr(bindec($byte));
+        }
+
+        return $output;
+    }
+
+    protected function verifyTotpForCounter(string $base32Secret, string $userCode, int $counter, int $digits = 6): bool
+    {
+        $secret = $this->base32Decode($base32Secret);
+
+        if ($secret === '') {
+            return false;
+        }
+
+        // 8-byte counter (RFC 4226)
+        $binaryCounter = pack('N*', 0) . pack('N*', $counter);
+
+        $hash   = hash_hmac('sha1', $binaryCounter, $secret, true);
+        $offset = ord(substr($hash, -1)) & 0x0F;
+
+        $segment  = substr($hash, $offset, 4);
+        $value    = unpack('N', $segment)[1] & 0x7fffffff;
+        $modulo   = 10 ** $digits;
+        $expected = str_pad((string) ($value % $modulo), $digits, '0', STR_PAD_LEFT);
+
+        return hash_equals($expected, $userCode);
+    }
+
+    // ── Channel helpers ─────────────────────────────────
+
+    public function currentChannel(Authenticatable $user): ?string
+    {
+        $userId = $user->getAuthIdentifier();
+
+        // Prefer TOTP if it is enabled
+        $hasTotp = TwoFactorSecret::where('user_id', $userId)
+            ->where('type', 'totp')
+            ->whereNull('revoked_at')
+            ->whereNotNull('enabled_at')
+            ->exists();
+
+        if ($hasTotp) {
+            return 'totp';
+        }
+
+        // Fallback to Email if it is enabled
+        $hasEmail = TwoFactorSecret::where('user_id', $userId)
+            ->where('type', 'email')
+            ->whereNull('revoked_at')
+            ->whereNotNull('enabled_at')
+            ->exists();
+
+        if ($hasEmail) {
+            return 'email';
+        }
+
+        return null;
+    }
+
+    public function getStatus(Authenticatable $user): array
+    {
+        return [
+            'enabled'  => $this->isEnabled($user),
+            'verified' => $this->isVerified($user),
+            'channel'  => $this->currentChannel($user),
+        ];
     }
 }

@@ -12,7 +12,9 @@ readonly class TwoFactorManageController
 
     public function status(Request $request): JsonResponse
     {
-        return response()->json(['enabled' => $this->twofa->isEnabled($request->user())]);
+        return response()->json(
+            $this->twofa->getStatus($request->user())
+        );
     }
 
     public function emailChallenge(Request $request): JsonResponse
@@ -34,7 +36,7 @@ readonly class TwoFactorManageController
     public function verifyOtp(Request $request): JsonResponse
     {
         $data = $request->validate(['code' => ['required', 'string']]);
-        $ok = $this->twofa->verifyOtp($request->user(), $data['code']);
+        $ok   = $this->twofa->verifyOtp($request->user(), $data['code']);
 
         return $ok
             ? response()->json(['status' => 'ok', 'message' => '2FA verified'])
@@ -45,14 +47,13 @@ readonly class TwoFactorManageController
     {
         $secret = $this->twofa->enableAuthenticatorApp($request->user());
 
-        // Frontend will show QR using otpauth:// URL once we add issuer/account info
         return response()->json(['status' => 'ok', 'secret' => $secret]);
     }
 
     public function verifyTotp(Request $request): JsonResponse
     {
         $data = $request->validate(['code' => ['required', 'string']]);
-        $ok = $this->twofa->verifyAuthenticatorApp($request->user(), $data['code']);
+        $ok   = $this->twofa->verifyAuthenticatorApp($request->user(), $data['code']);
 
         return $ok
             ? response()->json(['status' => 'ok', 'message' => 'Authenticator enabled'])
