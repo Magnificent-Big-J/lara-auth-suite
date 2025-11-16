@@ -13,7 +13,7 @@ Rainwaves/Lara Auth Suite gives you full authentication without writing boilerpl
 - Token authentication for mobile apps or external APIs
 - Session authentication for SPAs (Vue / React / Inertia / Livewire)
 - Unified password reset flow
-- Optional Two-Factor Authentication (email/SMS/TOTP)
+- Optional Two-Factor Authentication (Email OTP, Authenticator App, SMS)
 - Automatic role & permission assignment (Spatie Permissions)
 
 ### Ideal for:
@@ -32,8 +32,8 @@ Rainwaves/Lara Auth Suite gives you full authentication without writing boilerpl
 | Sanctum PAT login | ✅ Done | Token-based API authentication |
 | Session authentication | ✅ Done | Laravel guard + CSRF protection |
 | Password reset (email) | ✅ Done | Full reset flow with throttle |
-| 2FA: Email OTP | 🔄 Partial | Enabled if configured |
-| 2FA: TOTP | 🔜 Planned | Google Authenticator (QR + verification) |
+| 2FA: Email OTP | ✅ Done | Secure email verification codes |
+| 2FA: TOTP (Authenticator App) | ✅ Done | Google Authenticator / Authy / 1Password |
 | 2FA: SMS | 🔜 Planned | Twilio / Vonage driver |
 | Trusted devices | 🔜 Planned | Device remembering |
 | Token/session/device mgmt | 🔜 Planned | Revoke, audit |
@@ -160,9 +160,9 @@ POST /auth/token/logout
 
 ---
 
-### 7. Two-Factor Authentication (Optional)
+## 🔐 Two-Factor Authentication (Optional)
 
-Email OTP:
+### Email OTP
 
 ```
 POST /auth/session/2fa/email
@@ -170,11 +170,17 @@ POST /auth/session/2fa/verify-otp
 POST /auth/session/2fa/disable
 ```
 
-TOTP (future):
+### Authenticator App (TOTP)
 
 ```
 POST /auth/session/2fa/totp/enable
 POST /auth/session/2fa/totp/verify
+```
+
+### SMS OTP (coming soon)
+
+```
+POST /auth/session/2fa/sms
 ```
 
 ---
@@ -201,7 +207,7 @@ return [
     ],
 
     '2fa' => [
-        'channels' => ['email'],
+        'channels' => ['email', 'totp'],  // updated
         'enforcement' => 'optional',
     ],
 ];
@@ -219,7 +225,7 @@ A dedicated frontend guide (Vue / Nuxt / React) will cover:
 - Session cookies
 - CSRF handling
 - Auto-refresh bootstrap
-- 2FA screens
+- Full Email OTP + TOTP screens
 - Role & permission-based UI
 
 ---
@@ -231,8 +237,8 @@ A dedicated frontend guide (Vue / Nuxt / React) will cover:
 | 1 | Token auth (done) |
 | 2 | Session auth (done) |
 | 3 | Password reset (done) |
-| 4 | 2FA Email (done)|
-| 5 | 2FA TOTP |
+| 4 | 2FA Email (done) |
+| 5 | 2FA TOTP (done) |
 | 6 | 2FA SMS |
 | 7 | Trusted devices |
 | 8 | Token/session management |
@@ -245,7 +251,7 @@ A dedicated frontend guide (Vue / Nuxt / React) will cover:
 
 Report vulnerabilities to:
 
-📧 **security@rainwaves.dev**
+📧 security@rainwaves.dev
 
 ---
 
