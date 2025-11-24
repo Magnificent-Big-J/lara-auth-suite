@@ -33,7 +33,7 @@
         "laravel/pint": "^1.25"
     },
 
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
     "prefer-stable": true,
 
     "config": {
