@@ -288,17 +288,17 @@ https://github.com/Magnificent-Big-J/lara-auth-suite-nuxt-demo
 
 ## 🛣 Roadmap
 
-| Phase | Feature |
-|-------|---------|
-| 1 | Token authentication |
+| Phase | Feature                |
+|-------|------------------------|
+| 1 | Token authentication   |
 | 2 | Session authentication |
-| 3 | Password reset |
-| 4 | Email OTP |
-| 5 | TOTP |
-| 6 | Trusted devices |
-| 7 | Session/token audit |
+| 3 | Password reset         |
+| 4 | Email OTP              |
+| 5 | TOTP                   |
+| 6 | Trusted devices        |
+| 7 | Session/token audit    |
 | 8 | Frontend documentation |
-| 9 | v1.0 stable release |
+| 9 | v1.0.2 stable release  |
 
 ---
 
