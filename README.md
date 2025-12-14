@@ -2,7 +2,7 @@
 
 Modern, flexible authentication for Laravel APIs & SPAs.
 
-Plug-and-play authentication for Laravel 10/11, supporting both API token auth (Sanctum) and session-based auth for SPAs — with password resets, optional 2FA, and full role/permission support.
+Plug-and-play authentication for Laravel 10/11, supporting both API token auth (Sanctum) and session-based auth for SPAs — with password resets, backend‑enforced Two‑Factor Authentication, and full role/permission support.
 
 ---
 
@@ -13,15 +13,31 @@ Rainwaves/Lara Auth Suite gives you full authentication without writing boilerpl
 - Token authentication for mobile apps or external APIs
 - Session authentication for SPAs (Vue / React / Inertia / Livewire)
 - Unified password reset flow
-- Optional Two-Factor Authentication (Email OTP, Authenticator App, SMS)
+- Two‑Factor Authentication (Email OTP, Authenticator App)
 - Automatic role & permission assignment (Spatie Permissions)
 
 ### Ideal for:
 
 - SaaS platforms
 - Admin dashboards
-- Multi-tenant SPAs
+- Multi‑tenant SPAs
 - Hybrid apps needing both tokens + sessions
+
+---
+
+## 🧪 Demo Applications
+
+### Backend (Laravel)
+
+Reference backend implementation using the package:
+
+https://github.com/Magnificent-Big-J/lara-auth-suite-demo
+
+### Frontend (Nuxt SPA)
+
+Full SPA login + 2FA flow:
+
+https://github.com/Magnificent-Big-J/lara-auth-suite-nuxt-demo
 
 ---
 
@@ -29,12 +45,12 @@ Rainwaves/Lara Auth Suite gives you full authentication without writing boilerpl
 
 | Feature | Status | Description |
 |--------|--------|-------------|
-| Sanctum PAT login | ✅ Done | Token-based API authentication |
+| Sanctum PAT login | ✅ Done | Token‑based API authentication |
 | Session authentication | ✅ Done | Laravel guard + CSRF protection |
 | Password reset (email) | ✅ Done | Full reset flow with throttle |
 | 2FA: Email OTP | ✅ Done | Secure email verification codes |
 | 2FA: TOTP (Authenticator App) | ✅ Done | Google Authenticator / Authy / 1Password |
-| 2FA: SMS | 🔜 Planned | Twilio / Vonage driver |
+| 2FA enforcement | ✅ Done | Enforced during login (backend‑driven) |
 | Trusted devices | 🔜 Planned | Device remembering |
 | Token/session/device mgmt | 🔜 Planned | Revoke, audit |
 
@@ -51,26 +67,46 @@ composer require rainwaves/lara-auth-suite
 Publish configuration:
 
 ```bash
-php artisan vendor:publish --provider="Rainwaves\\LaraAuthSuite\\LaraAuthSuiteServiceProvider" --tag=authx-config
+php artisan vendor:publish \
+  --provider="Rainwaves\\LaraAuthSuite\\LaraAuthSuiteServiceProvider" \
+  --tag=authx-config
 ```
 
 This publishes:
 
-```
+```text
 config/authx.php
 ```
 
 ---
 
-## 📦 Usage
+## 🔐 Authentication Flow (Important)
 
-Below are the built-in authentication endpoints.
+Authentication decisions are enforced **on the backend**.
+Frontend clients **do not decide** authentication state.
+
+- Credentials are validated
+- Session or token is issued
+- Two‑Factor policy is evaluated immediately
+- User is **not fully authenticated** until 2FA is verified (if required)
+
+This prevents:
+
+- Logged‑in‑but‑unverified states
+- Session persistence before verification
+- Frontend‑controlled security decisions
 
 ---
 
-### 1. Login (Session Mode)
+## 📦 Usage
 
-**POST /auth/login**
+Below are the built‑in authentication endpoints.
+
+---
+
+### 1. Login (Session Mode – SPA)
+
+**POST /auth/session/login**
 
 Payload:
 
@@ -82,12 +118,22 @@ Payload:
 }
 ```
 
-Response:
+Response (2FA required):
 
 ```json
 {
-  "status": "ok",
-  "user": {}
+  "user": {},
+  "requires_two_factor": true,
+  "channel": "email"
+}
+```
+
+Response (2FA not required):
+
+```json
+{
+  "user": {},
+  "requires_two_factor": false
 }
 ```
 
@@ -95,16 +141,28 @@ Response:
 
 ### 2. Login (Token Mode / API Clients)
 
-**POST /auth/token/login**
+**POST /auth/login**
+
+Payload:
+
+```json
+{
+  "email": "admin@example.com",
+  "password": "secret"
+}
+```
 
 Response:
 
 ```json
 {
   "token": "plain-text-token",
+  "token_type": "Bearer",
   "abilities": ["*"]
 }
 ```
+
+> Token‑based 2FA enforcement is supported via middleware.
 
 ---
 
@@ -123,14 +181,14 @@ Requires either:
 
 Session:
 
-```
-POST /auth/logout
+```text
+POST /auth/session/logout
 ```
 
 Token:
 
-```
-POST /auth/token/logout
+```text
+POST /auth/logout
 ```
 
 ---
@@ -140,7 +198,9 @@ POST /auth/token/logout
 **POST /auth/password/forgot**
 
 ```json
-{ "email": "admin@example.com" }
+{
+  "email": "admin@example.com"
+}
 ```
 
 ---
@@ -160,11 +220,17 @@ POST /auth/token/logout
 
 ---
 
-## 🔐 Two-Factor Authentication (Optional)
+## 🔐 Two‑Factor Authentication
+
+Two‑Factor Authentication is:
+
+- Evaluated during login
+- Enforced by backend services
+- Independent of frontend auth state
 
 ### Email OTP
 
-```
+```text
 POST /auth/session/2fa/email
 POST /auth/session/2fa/verify-otp
 POST /auth/session/2fa/disable
@@ -172,20 +238,16 @@ POST /auth/session/2fa/disable
 
 ### Authenticator App (TOTP)
 
-```
+```text
 POST /auth/session/2fa/totp/enable
 POST /auth/session/2fa/totp/verify
 ```
 
-### SMS OTP (coming soon)
-
-```
-POST /auth/session/2fa/sms
-```
+> SMS‑based OTP is intentionally excluded due to SIM‑swap risk.
 
 ---
 
-## 🔧 Config Example (`config/authx.php`)
+## 🔧 Configuration (`config/authx.php`)
 
 ```php
 return [
@@ -196,19 +258,11 @@ return [
         'password_reset',
         'two_factor',
         'tokens',
-        'devices',
-    ],
-
-    'registration' => [
-        'enabled' => true,
-        'issue_token_on_register' => true,
-        'default_roles' => [],
-        'default_permissions' => [],
     ],
 
     '2fa' => [
-        'channels' => ['email', 'totp'],  // updated
-        'enforcement' => 'optional',
+        'channels' => ['email', 'totp'],
+        'enforcement' => 'optional', // off | optional | required
     ],
 ];
 ```
@@ -217,16 +271,18 @@ return [
 
 ## 🧩 Frontend Integration (SPA)
 
-A dedicated frontend guide (Vue / Nuxt / React) will cover:
+Frontend clients consume backend decisions.
+They do **not** determine authentication state.
 
-- Login form
-- Pinia/Zustand auth store
-- Forgot/reset password
-- Session cookies
-- CSRF handling
-- Auto-refresh bootstrap
-- Full Email OTP + TOTP screens
-- Role & permission-based UI
+The backend returns:
+
+- Whether 2FA is required
+- Which channel must be used
+- Whether the session/token is verified
+
+Reference implementation:
+
+https://github.com/Magnificent-Big-J/lara-auth-suite-nuxt-demo
 
 ---
 
@@ -234,22 +290,21 @@ A dedicated frontend guide (Vue / Nuxt / React) will cover:
 
 | Phase | Feature |
 |-------|---------|
-| 1 | Token auth (done) |
-| 2 | Session auth (done) |
-| 3 | Password reset (done) |
-| 4 | 2FA Email (done) |
-| 5 | 2FA TOTP (done) |
-| 6 | 2FA SMS |
-| 7 | Trusted devices |
-| 8 | Token/session management |
-| 9 | Frontend documentation |
-| 10 | v1.0 stable release |
+| 1 | Token authentication |
+| 2 | Session authentication |
+| 3 | Password reset |
+| 4 | Email OTP |
+| 5 | TOTP |
+| 6 | Trusted devices |
+| 7 | Session/token audit |
+| 8 | Frontend documentation |
+| 9 | v1.0 stable release |
 
 ---
 
 ## 🛡 Security
 
-Report vulnerabilities to:
+Report security issues to:
 
 📧 security@rainwaves.dev
 
@@ -263,13 +318,5 @@ MIT © Rainwaves
 
 ## ❤️ Credits
 
-Created with love by **Rainwaves**  
-Building secure, modern SaaS authentication for Laravel.
-
----
-
-## ✅ Ready for the Frontend Guide?
-
-Say:
-
-**"Start the frontend-only chat"**
+Built by **Rainwaves**  
+Security‑first authentication for serious Laravel applications.
