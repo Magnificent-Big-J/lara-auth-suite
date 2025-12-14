@@ -5,17 +5,21 @@ namespace Rainwaves\LaraAuthSuite;
 use App\Models\User;
 use Illuminate\Support\ServiceProvider;
 use Rainwaves\LaraAuthSuite\Contracts\AuthService;
+use Rainwaves\LaraAuthSuite\Contracts\ITwoFactorRequirement;
 use Rainwaves\LaraAuthSuite\Contracts\PasswordResetService;
 use Rainwaves\LaraAuthSuite\Contracts\PermissionSyncService;
 use Rainwaves\LaraAuthSuite\Contracts\RegistrationService;
 use Rainwaves\LaraAuthSuite\Contracts\SessionAuthService;
+use Rainwaves\LaraAuthSuite\Contracts\ITokenAuthService;
 use Rainwaves\LaraAuthSuite\Http\Middleware\EnsureTwoFactorVerified;
 use Rainwaves\LaraAuthSuite\Services\Auth\AuthServiceImpl;
 use Rainwaves\LaraAuthSuite\Services\Auth\PasswordResetServiceImpl;
 use Rainwaves\LaraAuthSuite\Services\Auth\PermissionSync\SpatiePermissionSyncService;
 use Rainwaves\LaraAuthSuite\Services\Auth\RegistrationServiceImpl;
 use Rainwaves\LaraAuthSuite\Services\Auth\SessionAuthServiceImpl;
+use Rainwaves\LaraAuthSuite\Services\Auth\TokenAuthServiceImpl;
 use Rainwaves\LaraAuthSuite\Services\TwoFactor\TwoFactorAuthService;
+use Rainwaves\LaraAuthSuite\Services\TwoFactor\TwoFactorRequirementImpl;
 use Rainwaves\LaraAuthSuite\Token\Contracts\TokenManager;
 use Rainwaves\LaraAuthSuite\Token\Sanctum\SanctumTokenManager;
 use Rainwaves\LaraAuthSuite\TwoFactor\Contracts\ITwoFactorAuth;
@@ -47,13 +51,20 @@ class LaraAuthSuiteServiceProvider extends ServiceProvider
             PasswordResetServiceImpl::class
         );
 
-        $this->app->bind(
-            SessionAuthService::class,
-            fn ($app) => new SessionAuthServiceImpl(
-                $app['config']->get('authx.user_model', User::class)
-            )
-        );
+        $this->app->bind(SessionAuthService::class, function ($app) {
+            $userModel = config('authx.user_model') ?: \App\Models\User::class;
 
+            return new SessionAuthServiceImpl(
+                $userModel,
+                $app->make(ITwoFactorRequirement::class),
+                $app->make(ITwoFactorAuth::class),
+            );
+        });
+
+        $this->app->singleton(
+            ITwoFactorRequirement::class,
+            TwoFactorRequirementImpl::class
+        );
         $this->app->singleton(
             ITwoFactorAuth::class,
             TwoFactorAuthService::class
@@ -74,6 +85,7 @@ class LaraAuthSuiteServiceProvider extends ServiceProvider
             )
         );
 
+        $this->app->bind(ITokenAuthService::class, TokenAuthServiceImpl::class);
     }
 
     public function boot(): void
@@ -89,7 +101,8 @@ class LaraAuthSuiteServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__.'/Database/migrations');
 
         $this->loadRoutesFrom(__DIR__.'/Routes/api.php');
-        $this->app['router']->aliasMiddleware('2fa.enforced', EnsureTwoFactorVerified::class);
+        $this->app['router']->aliasMiddleware('2fa.enfo
+        rced', EnsureTwoFactorVerified::class);
         $this->configurePasswordResetUrl();
 
     }

@@ -14,17 +14,25 @@ readonly class SessionAuthController
 
     public function login(LoginRequest $request): JsonResponse
     {
-        $user = $this->service->login(
+        $result = $this->service->login(
             $request->string('email')->toString(),
             $request->string('password')->toString()
         );
 
-        // Important: rotate session ID after login
-        $request->session()->regenerate();
+        if ($result->requiresTwoFactor) {
+            return response()->json([
+                'status' => '2fa_required',
+                'two_factor' => [
+                    'enabled' => true,
+                    'verified' => false,
+                    'channel' => $result->channel,
+                ],
+            ]);
+        }
 
         return response()->json([
             'status' => 'ok',
-            'user' => new UserResource($user),
+            'user' => new UserResource($result->user),
         ]);
     }
 
@@ -36,7 +44,6 @@ readonly class SessionAuthController
     public function logout(Request $request): JsonResponse
     {
         $this->service->logout();
-
         return response()->json(['status' => 'ok', 'message' => 'Logged out']);
     }
 }

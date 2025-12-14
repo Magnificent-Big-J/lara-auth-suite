@@ -1,45 +1,45 @@
 <?php
 
 namespace Rainwaves\LaraAuthSuite\Http\Controllers;
-
-namespace Rainwaves\LaraAuthSuite\Http\Controllers;
-
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Rainwaves\LaraAuthSuite\Contracts\AuthService;
+use Rainwaves\LaraAuthSuite\Contracts\ITokenAuthService;
 use Rainwaves\LaraAuthSuite\Http\Requests\LoginRequest;
 use Rainwaves\LaraAuthSuite\Http\Resources\UserResource;
 use Rainwaves\LaraAuthSuite\Token\Contracts\TokenManager;
 
 readonly class AuthController
 {
-    public function __construct(
-        private AuthService $auth,
-        private TokenManager $tokens
-    ) {}
+    public function __construct(private ITokenAuthService $service) {}
 
-    /**
-     * @throws ValidationException
-     */
     public function login(LoginRequest $request): JsonResponse
     {
-        $user = $this->auth->attemptLogin(
+        $result = $this->service->login(
             $request->string('email')->toString(),
             $request->string('password')->toString(),
         );
 
-        $token = $this->tokens->issue(
-            $user,
-            config('authx.tokens.default_abilities', ['*']),
-            config('authx.tokens.expiry_minutes')
-        );
+        if ($result->requiresTwoFactor) {
+            return response()->json([
+                'status' => '2fa_required',
+                'token' => $result->token,
+                'token_type' => $result->tokenType,
+                'two_factor' => [
+                    'enabled' => true,
+                    'verified' => false,
+                    'channel' => $result->channel,
+                ],
+                'user' => new UserResource($result->user),
+            ]);
+        }
 
         return response()->json([
             'status' => 'ok',
-            'token' => $token,
-            'token_type' => 'Bearer',
-            'user' => new UserResource($user),
+            'token' => $result->token,
+            'token_type' => $result->tokenType,
+            'user' => new UserResource($result->user),
         ]);
     }
 
@@ -50,8 +50,11 @@ readonly class AuthController
 
     public function logout(Request $request): JsonResponse
     {
-        $this->tokens->revokeCurrent($request->user());
+        $this->service->logout($request->user());
 
-        return response()->json(['status' => 'ok', 'message' => 'Logged out']);
+        return response()->json([
+            'status' => 'ok',
+            'message' => 'Logged out',
+        ]);
     }
 }

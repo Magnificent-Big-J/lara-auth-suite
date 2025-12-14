@@ -153,6 +153,8 @@ class TwoFactorAuthService implements ITwoFactorAuth
         TwoFactorChallenge::where('user_id', $user->getAuthIdentifier())
             ->whereNull('consumed_at')
             ->delete();
+
+        $this->clearVerified($user);
     }
 
     public function enableEmailOtp(Authenticatable $user): void
@@ -165,14 +167,28 @@ class TwoFactorAuthService implements ITwoFactorAuth
 
     public function markVerified(Authenticatable $user): void
     {
+        $hasToken = method_exists($user, 'currentAccessToken') && $user->currentAccessToken();
+
+        if (! $hasToken) {
+            session(['authx_2fa_verified' => true]);
+            return;
+        }
+
         $ttl = (int) config('authx.2fa.verification_ttl_seconds', 600);
         Cache::put($this->verificationCacheKey($user), true, $ttl);
     }
 
     public function isVerified(Authenticatable $user): bool
     {
+        $hasToken = method_exists($user, 'currentAccessToken') && $user->currentAccessToken();
+
+        if (! $hasToken) {
+            return (bool) session('authx_2fa_verified', false);
+        }
+
         return (bool) Cache::get($this->verificationCacheKey($user), false);
     }
+
 
     protected function verificationCacheKey(Authenticatable $user): string
     {
@@ -217,6 +233,17 @@ class TwoFactorAuthService implements ITwoFactorAuth
         return true;
     }
 
+    public function clearVerified(Authenticatable $user): void
+    {
+        $hasToken = method_exists($user, 'currentAccessToken') && $user->currentAccessToken();
+
+        if (! $hasToken) {
+            session()->forget('authx_2fa_verified');
+            return;
+        }
+
+        Cache::forget($this->verificationCacheKey($user));
+    }
     // ── Base32 helpers ──────────────────────────────────
 
     protected function base32Encode(string $data): string

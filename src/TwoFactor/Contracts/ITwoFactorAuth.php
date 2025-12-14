@@ -31,4 +31,6 @@ interface ITwoFactorAuth
 
     /** Convenience payload: ['enabled' => bool, 'verified' => bool, 'channel' => ?string] */
     public function getStatus(Authenticatable $user): array;
+
+    public function clearVerified(Authenticatable $user): void;
 }
