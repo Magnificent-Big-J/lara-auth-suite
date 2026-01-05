@@ -3,16 +3,15 @@
 namespace Rainwaves\LaraAuthSuite\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
-use Rainwaves\LaraAuthSuite\Contracts\AuthService;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Rainwaves\LaraAuthSuite\Contracts\ITokenAuthService;
 use Rainwaves\LaraAuthSuite\Http\Requests\LoginRequest;
-use Rainwaves\LaraAuthSuite\Http\Resources\UserResource;
-use Rainwaves\LaraAuthSuite\Token\Contracts\TokenManager;
+use Rainwaves\LaraAuthSuite\Support\UserResourceFactory;
 
 readonly class AuthController
 {
-    public function __construct(private ITokenAuthService $service) {}
+    public function __construct(private ITokenAuthService $service, private UserResourceFactory $userResources
+    ) {}
 
     public function login(LoginRequest $request): JsonResponse
     {
@@ -31,7 +30,7 @@ readonly class AuthController
                     'verified' => false,
                     'channel' => $result->channel,
                 ],
-                'user' => new UserResource($result->user),
+                'user' => $this->userResources->make($result->user),
             ]);
         }
 
@@ -39,13 +38,13 @@ readonly class AuthController
             'status' => 'ok',
             'token' => $result->token,
             'token_type' => $result->tokenType,
-            'user' => new UserResource($result->user),
+            'user' => $this->userResources->make($result->user),
         ]);
     }
 
-    public function me(Request $request): UserResource
+    public function me(Request $request): JsonResource
     {
-        return new UserResource($request->user());
+        return $this->userResources->make($request->user());
     }
 
     public function logout(Request $request): JsonResponse

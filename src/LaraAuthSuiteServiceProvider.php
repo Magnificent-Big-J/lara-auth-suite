@@ -20,6 +20,7 @@ use Rainwaves\LaraAuthSuite\Services\Auth\SessionAuthServiceImpl;
 use Rainwaves\LaraAuthSuite\Services\Auth\TokenAuthServiceImpl;
 use Rainwaves\LaraAuthSuite\Services\TwoFactor\TwoFactorAuthService;
 use Rainwaves\LaraAuthSuite\Services\TwoFactor\TwoFactorRequirementImpl;
+use Rainwaves\LaraAuthSuite\Support\UserResourceFactory;
 use Rainwaves\LaraAuthSuite\Token\Contracts\TokenManager;
 use Rainwaves\LaraAuthSuite\Token\Sanctum\SanctumTokenManager;
 use Rainwaves\LaraAuthSuite\TwoFactor\Contracts\ITwoFactorAuth;
@@ -52,7 +53,7 @@ class LaraAuthSuiteServiceProvider extends ServiceProvider
         );
 
         $this->app->bind(SessionAuthService::class, function ($app) {
-            $userModel = config('authx.user_model') ?: \App\Models\User::class;
+            $userModel = config('authx.user_model') ?: User::class;
 
             return new SessionAuthServiceImpl(
                 $userModel,
@@ -86,6 +87,8 @@ class LaraAuthSuiteServiceProvider extends ServiceProvider
         );
 
         $this->app->bind(ITokenAuthService::class, TokenAuthServiceImpl::class);
+        $this->app->singleton(UserResourceFactory::class, fn () => new UserResourceFactory());
+
     }
 
     public function boot(): void

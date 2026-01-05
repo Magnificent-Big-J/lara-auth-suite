@@ -8,14 +8,15 @@ use Rainwaves\LaraAuthSuite\Contracts\RegistrationService;
 use Rainwaves\LaraAuthSuite\Exceptions\RegistrationDisabled;
 use Rainwaves\LaraAuthSuite\Exceptions\ValidationFailed;
 use Rainwaves\LaraAuthSuite\Http\Requests\RegisterRequest;
-use Rainwaves\LaraAuthSuite\Http\Resources\UserResource;
+use Rainwaves\LaraAuthSuite\Support\UserResourceFactory;
 use Rainwaves\LaraAuthSuite\Token\Contracts\TokenManager;
 
 readonly class RegistrationController
 {
     public function __construct(
         private RegistrationService $registrations,
-        private TokenManager $tokens
+        private TokenManager $tokens,
+        private UserResourceFactory $userResources
     ) {}
 
     public function register(RegisterRequest $request): JsonResponse
@@ -30,7 +31,7 @@ readonly class RegistrationController
             throw ValidationFailed::from($e);
         }
 
-        $response = ['status' => 'ok', 'user' => new UserResource($user)];
+        $response = ['status' => 'ok', 'user' => $this->userResources->make($user)];
 
         if (config('authx.registration.issue_token_on_register', true)) {
             $token = $this->tokens->issue($user, config('authx.tokens.default_abilities', ['*']));
